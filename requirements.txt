@@ -1,0 +1,6 @@
+# Core dependencies:
+# ARQ has zero mandatory external dependencies; it runs on standard library + native OS kernel bindings.
+# Optional accelerators:
+psutil>=5.9.0
+matplotlib>=3.7.0
+scikit-learn>=1.2.0
