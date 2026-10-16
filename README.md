@@ -149,69 +149,171 @@ The ARQ system follows a **four-phase adaptive pipeline**:
 ## Installation
 
 ### Prerequisites
-- Python 3.8 or higher
-- pip package manager
+- **Python 3.8** or higher
+- **pip** package manager
+- **macOS** or **Linux** (Windows WSL also supported)
 
-### Setup
+### Step-by-Step Setup
 
 ```bash
-# Clone the repository
+# 1. Clone the repository
 git clone https://github.com/rithika20252024/Adaptive-Resource-Quarantine.git
 cd Adaptive-Resource-Quarantine
 
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# 2. Create a virtual environment (recommended)
+python3 -m venv venv
+source venv/bin/activate        # macOS / Linux
+# venv\Scripts\activate          # Windows
 
-# Install dependencies
-pip install -r requirements.txt
+# 3. Install the project and all dependencies
+pip install -e .
+```
 
-# Run the application
-python app.py
+> **Note:** The `-e .` flag installs the project in editable/development mode so the `arq` command becomes available globally in your terminal.
+
+---
+
+## How to Run
+
+The project provides a unified CLI tool called **`arq`** with four commands:
+
+### 1. 🚀 Live Demo (Recommended — Start Here)
+
+Run an interactive terminal demo that spawns a rogue CPU-burner process, detects the anomaly, applies graduated quarantine (Watchlist → Soft → Hard), and then auto-restores it when behavior normalizes:
+
+```bash
+python -m arq.cli demo
+```
+
+**Expected Output:**
+```
+======================================================================
+ ADAPTIVE RESOURCE QUARANTINE - LIVE DEMO
+ Demonstrating closed-loop detection, throttling, and auto-restoration
+======================================================================
+[*] Spawning test CPU burner process...
+[*] Target PID: 12345
+
+Phase 1: Detecting Rogue Anomaly & Applying Quarantine
+ [Step 01] CPU:  98.2% | Anomaly Score: 0.42 | Stage: NORMAL           | Action: monitoring
+ [Step 02] CPU:  99.1% | Anomaly Score: 0.68 | Stage: WATCHLIST        | Action: elevated monitoring
+ [Step 03] CPU:  99.5% | Anomaly Score: 0.78 | Stage: SOFT_QUARANTINE  | Action: nice +10, 40% duty cycle
+ [Step 04] CPU:  41.2% | Anomaly Score: 0.85 | Stage: HARD_QUARANTINE  | Action: nice +19, 15% duty cycle
+ ...
+
+Phase 2: Workload Behavior Normalizes (Simulating process settling)
+ [Step 09] CPU:   2.5% | Anomaly Score: 0.12 | Stage: HARD_QUARANTINE  | Action: monitoring recovery
+ [Step 10] CPU:   2.5% | Anomaly Score: 0.08 | Stage: WATCHLIST        | Action: stepping down
+ ...
+ [Step 16] CPU:   2.5% | Anomaly Score: 0.03 | Stage: NORMAL           | Action: fully restored
+
+[✓] Demo complete! Process was safely stepped down and restored without SIGKILL.
 ```
 
 ---
 
-## Usage
+### 2. 🌐 Web Dashboard
 
-### Start the System
+Launch a real-time web dashboard to visually monitor processes, inject simulated workloads, and control quarantine actions from your browser:
 
 ```bash
-# Start with default configuration
-python app.py
-
-# Start with custom config
-python app.py --config config/custom_config.yaml
-
-# Run in simulation mode (generates synthetic data)
-python app.py --simulate
+python -m arq.cli web
+# or specify a custom port:
+python -m arq.cli web --port 9090
 ```
 
-### Access Dashboard
-Open your browser and navigate to: `http://localhost:5000`
+Then open your browser at: **http://localhost:8080**
 
-### API Endpoints
+**Dashboard Features:**
+- Live process telemetry table (CPU %, Memory RSS, Anomaly Score)
+- Quarantine stage badges with color-coded severity
+- Anomaly score progress bars
+- Buttons to spawn simulated workloads (CPU Burner, Memory Leaker, Transient Burst)
+- Manual Quarantine / Release / Stop controls per process
+- Auto-refreshes every 1 second
+
+**Dashboard API Endpoints:**
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/status` | GET | System status and health check |
-| `/api/resources` | GET | Current resource metrics |
-| `/api/anomalies` | GET | Detected anomalies list |
-| `/api/quarantine` | GET | Quarantined resources |
-| `/api/quarantine/<id>/release` | POST | Release a quarantined resource |
-| `/api/metrics/history` | GET | Historical metrics data |
-| `/api/train` | POST | Trigger model retraining |
+| `/api/status` | GET | All process metrics, scores, stages, and history |
+| `/api/simulate` | POST | Spawn a simulated workload (`{"type": "cpu"\|"mem"\|"burst"}`) |
+| `/api/stop` | POST | Stop a simulated workload (`{"pid": 12345}`) |
+| `/api/quarantine` | POST | Manually quarantine a process (`{"pid": 12345}`) |
+| `/api/release` | POST | Release a quarantined process (`{"pid": 12345}`) |
+
+---
+
+### 3. 📊 Performance Benchmark
+
+Run a comparative benchmark evaluating three strategies — Unprotected, Static Kill (CFS/OOM), and Adaptive Quarantine:
+
+```bash
+python -m arq.cli benchmark
+# with custom trial duration and markdown output:
+python -m arq.cli benchmark --duration 6.0 --markdown
+```
+
+**Expected Output:**
+```
+======================================================================
+ ADAPTIVE RESOURCE QUARANTINE - COMPARATIVE BENCHMARK
+ Evaluating: Unprotected vs Static Kill vs Adaptive Quarantine
+======================================================================
+
+[1/3] Running Unprotected Baseline trial...
+      Done: P95=142.30ms, P99=312.50ms
+
+[2/3] Running Static Kill (CFS/OOM) trial...
+      Done: P95=38.20ms, State Loss=100%
+
+[3/3] Running Adaptive Resource Quarantine trial...
+      Done: P95=24.10ms, State Loss=0%
+
+┌────────────────────────┬──────────┬──────────┬────────────┬────────────┐
+│ Strategy               │ P95 (ms) │ P99 (ms) │ State Loss │ Throughput │
+├────────────────────────┼──────────┼──────────┼────────────┼────────────┤
+│ Unprotected            │   142.30 │   312.50 │        0%  │    Low     │
+│ Static Kill            │    38.20 │    56.40 │      100%  │    High    │
+│ Adaptive Quarantine    │    24.10 │    31.20 │        0%  │    High    │
+└────────────────────────┴──────────┴──────────┴────────────┴────────────┘
+```
+
+---
+
+### 4. 📝 Quick CLI Help
+
+```bash
+python -m arq.cli --help
+```
+
+```
+usage: cli.py [-h] {benchmark,demo,web,pptx} ...
+
+Adaptive Resource Quarantine (ARQ) CLI
+
+positional arguments:
+  {benchmark,demo,web,pptx}
+    benchmark           Run comparative performance benchmark
+    demo                Run interactive quarantine & restoration demonstration
+    web                 Launch real-time web dashboard
+    pptx                Generate Review 1 PowerPoint presentation
+
+optional arguments:
+  -h, --help            show this help message and exit
+```
 
 ---
 
 ## Outputs & Results
 
-The system provides:
-1. **Real-time Dashboard** with live resource utilization graphs
-2. **Anomaly Detection Alerts** with severity classification
-3. **Quarantine Action Logs** with detailed forensic information
-4. **Performance Metrics** including precision, recall, F1-score
-5. **Comparative Analysis** charts against baseline methods
+The system produces the following outputs:
+
+1. **Terminal Demo** — Live step-by-step anomaly detection and quarantine lifecycle in the terminal
+2. **Web Dashboard** — Interactive browser-based UI with real-time process telemetry, anomaly scores, and quarantine controls
+3. **Benchmark Report** — Comparative performance table (P95/P99 latency, state loss rate, throughput) across three strategies
+4. **Quarantine Action Logs** — Detailed logs of every stage transition with timestamps and reasons
+5. **Markdown Reports** — Exportable markdown tables for embedding in documentation
 
 ---
 
