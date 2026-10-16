@@ -5,8 +5,11 @@ interactive quarantine control, and visualization without external dependencies.
 """
 
 from http.server import HTTPServer, SimpleHTTPRequestHandler
+from socketserver import ThreadingMixIn
 import json
 import os
+import signal
+import sys
 import threading
 import time
 from urllib.parse import urlparse, parse_qs
@@ -91,6 +94,21 @@ class DashboardRequestHandler(SimpleHTTPRequestHandler):
         static_dir = os.path.join(os.path.dirname(__file__), "static")
         super().__init__(*args, directory=static_dir, **kwargs)
 
+    def handle(self):
+        """Override to silently handle broken pipe / connection reset errors."""
+        try:
+            super().handle()
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            pass  # Client disconnected early — totally normal for browsers
+
+    def log_message(self, format, *args):
+        """Suppress noisy log output for broken connections."""
+        # Only log if the response was actually sent successfully
+        try:
+            super().log_message(format, *args)
+        except Exception:
+            pass
+
     def do_GET(self):
         parsed = urlparse(self.path)
         if parsed.path == "/api/status":
@@ -169,6 +187,10 @@ class DashboardRequestHandler(SimpleHTTPRequestHandler):
             self.send_response(404)
             self.end_headers()
 
+class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
+    """Handle each request in a new thread to avoid blocking on slow clients."""
+    daemon_threads = True
+
 def run_server(port: int = 8080):
     state = ARQDashboardState()
     DashboardRequestHandler.state = state
@@ -182,7 +204,7 @@ def run_server(port: int = 8080):
     t = threading.Thread(target=background_loop, daemon=True)
     t.start()
 
-    server = HTTPServer(("0.0.0.0", port), DashboardRequestHandler)
+    server = ThreadingHTTPServer(("0.0.0.0", port), DashboardRequestHandler)
     print(f"Adaptive Resource Quarantine Dashboard live on http://localhost:{port}")
     try:
         server.serve_forever()
