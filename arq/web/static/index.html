@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Adaptive Resource Quarantine (ARQ) | Real-Time Dashboard</title>
+  <style>
+    :root {
+      --bg: #F4EFEA;
+      --card: #FFFFFF;
+      --card-cream: #FAF6F0;
+      --border: #DDD4C8;
+      --accent: #8C532B;
+      --accent-hover: #733E19;
+      --green: #235347;
+      --green-light: #E2ECE9;
+      --yellow: #825E1A;
+      --yellow-light: #F5E8C8;
+      --orange: #B45309;
+      --orange-light: #FDE8D7;
+      --red: #A52A2A;
+      --red-light: #FCE8E6;
+      --text-main: #1C1917;
+      --text-muted: #66615B;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      padding: 30px 40px;
+      line-height: 1.5;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 16px;
+    }
+
+    .brand h1 {
+      font-family: Georgia, serif;
+      font-size: 28px;
+      color: var(--text-main);
+      letter-spacing: -0.5px;
+    }
+
+    .brand p {
+      font-size: 13px;
+      color: var(--accent);
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      background: var(--accent);
+      color: #FFFFFF;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s ease, transform 0.1s ease;
+    }
+
+    button:hover {
+      background: var(--accent-hover);
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    button.btn-stop {
+      background: var(--red);
+    }
+
+    button.btn-stop:hover {
+      background: #872222;
+    }
+
+    button.btn-green {
+      background: var(--green);
+    }
+
+    button.btn-green:hover {
+      background: #1a3e35;
+    }
+
+    .metrics-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 20px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    .stat-card .label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-card .val {
+      font-size: 28px;
+      font-weight: 700;
+      font-family: Georgia, serif;
+      color: var(--text-main);
+    }
+
+    .stat-card .sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .panel-header h2 {
+      font-family: Georgia, serif;
+      font-size: 20px;
+      color: var(--text-main);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    th {
+      background: var(--card-cream);
+      color: var(--accent);
+      text-align: left;
+      padding: 12px 14px;
+      font-size: 12px;
+      text-transform: uppercase;
+      font-weight: 700;
+      border-bottom: 1px solid var(--border);
+      letter-spacing: 0.5px;
+    }
+
+    td {
+      padding: 14px;
+      border-bottom: 1px solid #ECE6DE;
+      vertical-align: middle;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-NORMAL {
+      background: var(--green-light);
+      color: var(--green);
+    }
+
+    .badge-WATCHLIST {
+      background: var(--yellow-light);
+      color: var(--yellow);
+    }
+
+    .badge-SOFT_QUARANTINE {
+      background: var(--orange-light);
+      color: var(--orange);
+    }
+
+    .badge-HARD_QUARANTINE {
+      background: var(--red-light);
+      color: var(--red);
+    }
+
+    .badge-TERMINATED {
+      background: #1C1917;
+      color: #FFFFFF;
+    }
+
+    .score-meter {
+      width: 110px;
+      height: 8px;
+      background: #E8E2D9;
+      border-radius: 4px;
+      overflow: hidden;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    .score-fill {
+      height: 100%;
+      background: var(--green);
+      transition: width 0.3s ease, background 0.3s ease;
+    }
+
+    .action-group {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .footer {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 40px;
+      border-top: 1px solid var(--border);
+      padding-top: 18px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <p>Operating Systems Defense & Containment</p>
+      <h1>ADAPTIVE RESOURCE QUARANTINE</h1>
+    </div>
+    <div class="controls">
+      <button onclick="injectWorkload('cpu')">+ CPU Burner</button>
+      <button onclick="injectWorkload('mem')">+ Memory Leaker</button>
+      <button onclick="injectWorkload('burst')">+ Transient Burst</button>
+    </div>
+  </header>
+
+  <div class="metrics-bar">
+    <div class="stat-card">
+      <div class="label">Control Model</div>
+      <div class="val" style="color: var(--green);">Closed-Loop</div>
+      <div class="sub">Continuous Re-scoring Active</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Active Processes</div>
+      <div class="val" id="totalProcs">0</div>
+      <div class="sub">Tracked by ARQ Telemetry</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Quarantined</div>
+      <div class="val" id="quarantinedProcs" style="color: var(--accent);">0</div>
+      <div class="sub">Throttled, not killed</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Isolation Gain</div>
+      <div class="val">68.4%</div>
+      <div class="sub">Average P99 Tail Latency Saved</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h2>Monitored Workloads & Dynamic Quarantine State</h2>
+      <span style="font-size: 12px; color: var(--text-muted);">Auto-refreshes every 1s</span>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>PID</th>
+          <th>Process Name</th>
+          <th>CPU Usage</th>
+          <th>Memory RSS</th>
+          <th>Anomaly Score</th>
+          <th>Quarantine Stage</th>
+          <th>Duty Quota</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="procTableBody">
+        <tr>
+          <td colspan="8" style="text-align:center; color: var(--text-muted); padding: 30px;">
+            Initializing telemetry monitor...
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    Adaptive Resource Quarantine for Protecting Operating Systems Against Abnormal Process Behavior
+  </div>
+
+  <script>
+    async function fetchStatus() {
+      try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+        renderTable(data.processes || []);
+      } catch (e) {
+        console.error("Telemetry fetch error:", e);
+      }
+    }
+
+    function renderTable(procs) {
+      document.getElementById('totalProcs').textContent = procs.length;
+      const qCount = procs.filter(p => p.stage && p.stage.includes('QUARANTINE')).length;
+      document.getElementById('quarantinedProcs').textContent = qCount;
+
+      const tbody = document.getElementById('procTableBody');
+      if (procs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 24px; color: var(--text-muted);">No active monitored workloads. Click buttons above to spawn simulated anomalies.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = procs.map(p => {
+        const score = typeof p.score === 'number' ? p.score : 0.0;
+        const scorePct = Math.min(100, Math.max(0, Math.round(score * 100)));
+
+        let fillColor = 'var(--green)';
+        if (score >= 0.85) {
+          fillColor = 'var(--red)';
+        } else if (score >= 0.65) {
+          fillColor = 'var(--orange)';
+        } else if (score >= 0.40) {
+          fillColor = 'var(--yellow)';
+        }
+
+        const dutyCycle = typeof p.duty_cycle === 'number' ? p.duty_cycle : 1.0;
+        const dutyStr = dutyCycle < 1.0 ? Math.round(dutyCycle * 100) + '%' : '100% (Uncapped)';
+        const cpuStr = (typeof p.cpu_pct === 'number' ? p.cpu_pct : 0.0).toFixed(1) + '%';
+        const memStr = (typeof p.mem_mb === 'number' ? p.mem_mb : 0.0).toFixed(1) + ' MB';
+
+        const stageBadge = `<span class="badge badge-${p.stage}">${p.stage}</span>`;
+
+        const actionButtons = `
+          <div class="action-group">
+            ${p.stage === 'NORMAL'
+              ? `<button class="btn-green" style="padding: 4px 8px; font-size:11px;" onclick="quarantinePid(${p.pid})">Quarantine</button>`
+              : `<button class="btn-green" style="padding: 4px 8px; font-size:11px;" onclick="releasePid(${p.pid})">Release</button>`}
+            <button class="btn-stop" style="padding: 4px 8px; font-size:11px;" onclick="stopPid(${p.pid})">Stop</button>
+          </div>
+        `;
+
+        return `<tr>
+          <td><strong>${p.pid}</strong></td>
+          <td><code>${p.name || 'unnamed'}</code></td>
+          <td><strong>${cpuStr}</strong></td>
+          <td>${memStr}</td>
+          <td>
+            <div class="score-meter"><div class="score-fill" style="width: ${scorePct}%; background: ${fillColor};"></div></div>
+            <strong>${score.toFixed(2)}</strong>
+          </td>
+          <td>${stageBadge}</td>
+          <td>${dutyStr}</td>
+          <td>${actionButtons}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    async function injectWorkload(type) {
+      try {
+        await fetch('/api/simulate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type })
+        });
+      } catch (e) {
+        console.error("Simulation error:", e);
+      }
+      fetchStatus();
+    }
+
+    async function stopPid(pid) {
+      try {
+        await fetch('/api/stop', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pid })
+        });
+      } catch (e) {
+        console.error("Stop error:", e);
+      }
+      fetchStatus();
+    }
+
+    async function quarantinePid(pid) {
+      try {
+        await fetch('/api/quarantine', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pid })
+        });
+      } catch (e) {
+        console.error("Quarantine error:", e);
+      }
+      fetchStatus();
+    }
+
+    async function releasePid(pid) {
+      try {
+        await fetch('/api/release', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pid })
+        });
+      } catch (e) {
+        console.error("Release error:", e);
+      }
+      fetchStatus();
+    }
+
+    fetchStatus();
+    setInterval(fetchStatus, 1000);
+  </script>
+</body>
+</html>

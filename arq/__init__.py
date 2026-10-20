@@ -1,0 +1,5 @@
+"""Adaptive Resource Quarantine (ARQ) - Intelligent Process Isolation System."""
+
+__version__ = "1.0.0"
+
+__all__ = ["__version__"]
