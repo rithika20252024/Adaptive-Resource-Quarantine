@@ -8,7 +8,8 @@
 **Project Title:** Adaptive Resource Quarantine – An Intelligent System for Dynamic Resource Isolation and Threat Mitigation in Cloud Environments
 
 **Team Members:**
-- Rithika (Lead Developer)
+- Rithika
+- vaishanavi
 
 ---
 
