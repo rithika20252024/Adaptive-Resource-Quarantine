@@ -5,7 +5,7 @@ Provides CLI subcommands:
 - `demo`: Live interactive demonstration of anomaly detection and adaptive quarantine.
 - `monitor`: Continuous terminal telemetry monitor.
 - `web`: Launches real-time web dashboard.
-- `pptx`: Re-generates Review 1 presentation.
+
 """
 
 import argparse
