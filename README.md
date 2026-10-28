@@ -1,354 +1,259 @@
 # Adaptive Resource Quarantine (ARQ)
 
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Zero Dependencies](https://img.shields.io/badge/dependencies-none-green.svg)]()
+**An adaptive process-monitoring and resource-quarantine system with rule-based anomaly detection and shadow-mode machine learning.**
 
-**An intelligent, closed-loop system for detecting anomalous process behavior and enforcing graduated resource quarantine — without killing processes.**
+ARQ monitors running processes, evaluates resource-usage behavior, and applies graduated responses to anomalous processes. It combines an EWMA-based rule engine with an Isolation Forest machine-learning pipeline that can be evaluated alongside the existing detector.
 
-ARQ monitors process telemetry in real-time, scores multi-dimensional anomalies using EWMA-based adaptive baselines, and enforces graduated CPU throttling via POSIX `SIGSTOP`/`SIGCONT` duty-cycle pulsing. When behavior normalizes, processes are automatically restored through a hysteresis-verified step-down — no data loss, no SIGKILL.
-
----
+The rule-based engine remains responsible for quarantine decisions. The ML detector currently operates in **shadow mode**, allowing its outputs to be compared with rule-based decisions without changing process enforcement.
 
 ## Key Features
 
-| Feature | Description |
-|---------|-------------|
-| **Cross-Platform Telemetry** | Native `/proc` parsing (Linux) and `libproc` ctypes bindings (macOS) — zero external dependencies |
-| **Multi-Dimensional Scoring** | EWMA-tracked baselines across CPU, memory growth, I/O throughput, and burst volatility |
-| **Sigmoidal CPU Scoring** | Smooth continuous scoring instead of brittle threshold step functions |
-| **Burst Suppression** | Transient spikes (compilers, renderers) are dampened for 3 cycles to avoid false quarantine |
-| **Graduated Quarantine** | 5 stages: Normal → Watchlist → Soft Quarantine → Hard Quarantine → Terminated |
-| **Duty-Cycle Throttling** | POSIX `SIGSTOP`/`SIGCONT` pulsing at 100ms resolution — no root/cgroup required |
-| **Automated Restoration** | Hysteresis-verified step-down (H=4 cycles) ensures stability before releasing constraints |
-| **Real-Time Dashboard** | Browser-based UI with live telemetry, anomaly scores, and interactive quarantine controls |
-| **Comparative Benchmarking** | Built-in evaluation framework comparing Unprotected vs Static Kill vs Adaptive Quarantine |
-
----
+- **Process telemetry collection:** Collects CPU, memory, I/O, and thread-related metrics.
+- **Adaptive rule-based scoring:** Uses EWMA baselines and a weighted composite anomaly score.
+- **Graduated quarantine:** Supports Normal, Watchlist, Soft Quarantine, Hard Quarantine, and Terminated stages.
+- **Resource enforcement:** Uses process-priority adjustment and duty-cycle throttling where supported.
+- **Automated restoration:** Uses hysteresis to avoid restoring processes based on a single low-anomaly reading.
+- **Web dashboard:** Displays process information, anomaly scores, and quarantine states, with controls for supported operations.
+- **Isolation Forest detector:** Provides a machine-learning-based anomaly signal alongside the existing rule-based detector.
+- **Model training and evaluation:** Includes scripts for training, evaluating, and comparing detector behavior.
+- **Automated tests:** Includes tests for core functionality and the ML pipeline.
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         USER WORKSPACE                              │
-│   Benign Services    Transient Spikes    Rogue / Malicious Procs    │
-└──────────────────────────────┬──────────────────────────────────────┘
-                               │ Continuous Telemetry
-                               ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                      TELEMETRY COLLECTOR                            │
-│  Linux: /proc/<pid>/stat, status, io                                │
-│  macOS: libproc.proc_pidinfo (PROC_PIDTASKINFO) + mach_timebase     │
-│  Vector: [CPU%, RSS MB/s, Total RSS, IO KB/s, Burst Δ]             │
-└──────────────────────────────┬──────────────────────────────────────┘
-                               │ Raw Telemetry Vector
-                               ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                   ANOMALY SCORING ENGINE                            │
-│  EWMA Baseline: μ(t) = α·x(t) + (1-α)·μ(t-1)    (α = 0.25)       │
-│  Scoring: Sigmoidal CPU + Saturating Mem + IO + Burst Volatility    │
-│  Composite: S = 0.40·S_cpu + 0.35·S_mem + 0.15·S_io + 0.10·S_burst │
-│  Burst Suppression: dampen 35% if anomalous < 3 consecutive cycles  │
-└──────────────────────────────┬──────────────────────────────────────┘
-                               │ Effective Anomaly Score ∈ [0, 1]
-                               ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                ADAPTIVE STATE MACHINE                               │
-│                                                                     │
-│  NORMAL ──S≥0.40──▶ WATCHLIST ──S≥0.65──▶ SOFT_QUARANTINE           │
-│    ▲                    ▲                      │                    │
-│    │ H cycles           │ H cycles          S≥0.85                  │
-│    │ S<0.40             │ S<0.40               ▼                    │
-│  WATCHLIST ◀── SOFT_QUARANTINE ◀── HARD_QUARANTINE                  │
-│                                        │ T_persist exceeded         │
-│                                        ▼                            │
-│                                   TERMINATED                        │
-└──────────────────────────────┬──────────────────────────────────────┘
-                               │ Actuation Commands
-                               ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                   ENFORCEMENT ACTUATORS                              │
-│  CPU Duty-Cycle Pulser: SIGSTOP/SIGCONT at 100ms period             │
-│  Priority Modulation: setpriority / renice (+10 soft, +19 hard)     │
-│  Restoration: hysteresis H=4 cycles before de-escalation            │
-└─────────────────────────────────────────────────────────────────────┘
+```text
+Running Processes
+       |
+       v
+Process Telemetry Collector
+       |
+       v
+Telemetry Feature Extraction
+       |
+       +---------------------------+
+       |                           |
+       v                           v
+Rule-Based Anomaly Scorer     Isolation Forest
+       |                           |
+       v                           v
+Quarantine State Machine     ML Score and Flag
+       |                     (Shadow Mode)
+       v                           |
+Process Enforcement                v
+       |                     Evaluation and
+       v                     Comparison
+Restoration Engine
+       |
+       v
+Web Dashboard and Reports
 ```
 
----
+**Important:** The rule-based score drives quarantine and restoration. ML output is used for monitoring and evaluation; it does not independently trigger enforcement.
+
+## Machine-Learning Pipeline
+
+The project includes an Isolation Forest model trained on seven process-telemetry features:
+
+1. `cpu_percent`
+2. `memory_rss_mb`
+3. `memory_vms_mb`
+4. `memory_growth_mb_s`
+5. `io_read_kb_s`
+6. `io_write_kb_s`
+7. `num_threads`
+
+Isolation Forest identifies observations that differ from the learned telemetry patterns. Its raw decision-function output is converted into an anomaly score for dashboard display and compared with a calibration threshold to produce an anomaly flag.
+
+The displayed ML score is a **scaled anomaly score, not a calibrated probability**.
+
+### Current ML Status
+
+- ML inference is integrated into the dashboard backend.
+- The existing rule-based detector remains the enforcement authority.
+- Training and evaluation utilities are available in the repository.
+- Active and candidate model artifacts are kept separate.
+- Candidate models must be evaluated against normal and anomalous workloads before being considered for deployment.
 
 ## Project Structure
 
-```
+```text
 quarant/
 ├── arq/
-│   ├── __init__.py                     # Package init
-│   ├── cli.py                          # Unified CLI (demo, web, benchmark)
+│   ├── cli.py
 │   ├── core/
-│   │   ├── process_model.py            # ProcessMetrics, ProcessProfile, QuarantineStage
-│   │   ├── monitor.py                  # Cross-platform telemetry (libproc/proc)
-│   │   ├── anomaly_scorer.py           # EWMA + multi-vector composite scoring
-│   │   ├── quarantine_controller.py    # DutyCycleThrottler + stage enforcement
-│   │   └── restoration_engine.py       # Hysteresis-based automated recovery
-│   ├── web/
-│   │   ├── server.py                   # ThreadingHTTPServer + REST API
-│   │   └── static/
-│   │       └── index.html              # Real-time dashboard (inline CSS/JS)
-│   ├── simulation/
-│   │   ├── workloads.py                # CPU burner, memory leaker, IO storm, burst
-│   │   └── noisy_neighbor.py           # Latency probe for benchmarking
-│   └── evaluation/
-│       ├── metrics.py                  # BenchmarkResult dataclass
-│       ├── benchmark_runner.py         # Automated comparative trials
-│       └── report_generator.py         # ASCII + Markdown table formatters
+│   │   ├── process_model.py
+│   │   ├── monitor.py
+│   │   ├── anomaly_scorer.py
+│   │   ├── quarantine_controller.py
+│   │   ├── restoration_engine.py
+│   │   ├── ml_pipeline.py
+│   │   └── ml_training.py
+│   └── web/
+│       ├── server.py
+│       └── static/
+│           └── index.html
+├── scripts/
+│   ├── compare_detectors.py
+│   ├── evaluate_ml_candidate.py
+│   └── test_rule_features.py
 ├── tests/
-│   ├── test_anomaly_scorer.py
-│   ├── test_monitor.py
-│   ├── test_quarantine.py
-│   └── test_restoration.py
+│   ├── test_ml_pipeline.py
+│   └── test_ml_training.py
+├── models/
+│   └── arq/
+├── data/
+├── requirements.txt
+├── requirements-ml.txt
 ├── setup.py
-├── requirements.txt                    # No external deps needed
-├── LICENSE
 └── README.md
 ```
 
----
+Additional files and tests may be present in the repository.
 
 ## Installation
 
+Clone the repository:
+
 ```bash
-# Clone the repository
-git clone https://github.com/rithika20252024/quarant.git
-cd quarant
-
-# Create virtual environment
-python3 -m venv venv
-source venv/bin/activate
-
-# Install in development mode
-pip install -e .
+git clone https://github.com/vaishnavikarri08-crypto/adaptive-resource-quarantine.git
+cd adaptive-resource-quarantine
 ```
 
-> **Note:** ARQ uses **only Python standard library** modules — no external packages to install.
+Create and activate a virtual environment:
 
----
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Install the project:
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install -e .
+```
+
+Install the ML dependencies when working with model training or ML evaluation:
+
+```bash
+python -m pip install -r requirements-ml.txt
+```
+
+If your environment is missing virtual-environment support, install the appropriate Python venv package for your Linux distribution first.
 
 ## Usage
 
-### 1. Live Demo
+### 1. Run the live demo
 
-Run the full quarantine lifecycle: spawn a rogue CPU burner → detect anomaly → escalate through quarantine stages → simulate normalization → auto-restore.
+From the repository root, with the virtual environment activated:
 
 ```bash
 python -m arq.cli demo
 ```
 
-**Output:**
-```
-======================================================================
- ADAPTIVE RESOURCE QUARANTINE - LIVE DEMO
- Demonstrating closed-loop detection, throttling, and auto-restoration
-======================================================================
-[*] Spawning test CPU burner process...
-[*] Target PID: 54321
+The demo exercises the quarantine lifecycle using a simulated workload. Review the terminal output to observe anomaly scoring, quarantine transitions, and restoration behavior.
 
-Phase 1: Detecting Rogue Anomaly & Applying Quarantine
- [Step 01] CPU:  98.2% | Anomaly Score: 0.42 | Stage: NORMAL           | Action: monitoring
- [Step 02] CPU:  99.1% | Anomaly Score: 0.68 | Stage: WATCHLIST        | Action: elevated monitoring
- [Step 03] CPU:  99.5% | Anomaly Score: 0.78 | Stage: SOFT_QUARANTINE  | Action: nice +10, 40% duty cycle
- [Step 04] CPU:  41.2% | Anomaly Score: 0.85 | Stage: HARD_QUARANTINE  | Action: nice +19, 15% duty cycle
-
-Phase 2: Workload Behavior Normalizes
- [Step 09] CPU:   2.5% | Anomaly Score: 0.12 | Stage: HARD_QUARANTINE  | Action: monitoring recovery
- [Step 10] CPU:   2.5% | Anomaly Score: 0.08 | Stage: SOFT_QUARANTINE  | Action: stepping down
- [Step 16] CPU:   2.5% | Anomaly Score: 0.03 | Stage: NORMAL           | Action: fully restored
-
-[✓] Demo complete! Process was safely stepped down and restored without SIGKILL.
-```
-
-### 2. Web Dashboard
-
-Launch the real-time browser dashboard:
+### 2. Launch the web dashboard
 
 ```bash
 python -m arq.cli web
-# Custom port:
-python -m arq.cli web --port 9090
 ```
 
-Open **http://localhost:8080** in your browser.
+Open the following address in your browser:
 
-**Dashboard capabilities:**
-- Live process telemetry table (CPU %, Memory RSS, Anomaly Score)
-- Color-coded quarantine stage badges
-- Anomaly score progress bars with severity coloring
-- Spawn simulated workloads: CPU Burner, Memory Leaker, Transient Burst
-- Manual Quarantine / Release / Stop controls per process
-- Auto-refreshes every 1 second
+http://127.0.0.1:8080
 
-**REST API:**
+The dashboard provides a view of monitored processes, telemetry, anomaly scores, and quarantine states. Available controls depend on the implementation and the permissions of the running environment.
 
-| Endpoint | Method | Body | Description |
-|----------|--------|------|-------------|
-| `/api/status` | GET | — | All process metrics, scores, stages, history |
-| `/api/simulate` | POST | `{"type": "cpu"\|"mem"\|"burst"}` | Spawn simulated workload |
-| `/api/stop` | POST | `{"pid": 12345}` | Stop a simulated workload |
-| `/api/quarantine` | POST | `{"pid": 12345}` | Manually quarantine a process |
-| `/api/release` | POST | `{"pid": 12345}` | Release a quarantined process |
+### 3. Run the test suite
 
-### 3. Performance Benchmark
-
-Compare three isolation strategies under identical conditions:
-
-```bash
-python -m arq.cli benchmark
-# With markdown output:
-python -m arq.cli benchmark --duration 6.0 --markdown
-```
-
-**Output:**
-```
-======================================================================
- ADAPTIVE RESOURCE QUARANTINE - COMPARATIVE BENCHMARK
- Evaluating: Unprotected vs Static Kill vs Adaptive Quarantine
-======================================================================
-
-[1/3] Running Unprotected Baseline trial...
-      Done: P95=142.30ms, P99=312.50ms
-
-[2/3] Running Static Kill (CFS/OOM) trial...
-      Done: P95=38.20ms, State Loss=100%
-
-[3/3] Running Adaptive Resource Quarantine trial...
-      Done: P95=24.10ms, State Loss=0%
-
-+--------------------------------+----------------+----------------+--------+
-| Strategy                       | P95 Latency    | P99 Latency    | Loss   |
-+--------------------------------+----------------+----------------+--------+
-| Unprotected Baseline           |    142.30 ms   |    312.50 ms   |   0%   |
-| Static Kill (CFS/OOM)          |     38.20 ms   |     56.40 ms   | 100%   |
-| Adaptive Quarantine (Proposed) |     24.10 ms   |     31.20 ms   |   0%   |
-+--------------------------------+----------------+----------------+--------+
-```
-
-### 4. Run Tests
+Run the project's tests using the commands supported by the current environment:
 
 ```bash
 python -m pytest tests/ -v
-# or
-python -m unittest discover tests -v
 ```
 
----
+For ML-specific tests:
 
-## How It Works
-
-### Telemetry Collection
-
-The `ProcessMonitor` collects per-process metrics using native OS APIs:
-
-| Platform | Source | Metrics |
-|----------|--------|---------|
-| **macOS** | `libproc.proc_pidinfo` via ctypes | CPU time (user+system ns), RSS, VMS, threads |
-| **Linux** | `/proc/<pid>/stat`, `status`, `io` | CPU ticks, VmRSS, VmSize, read/write bytes |
-
-Sampling interval: 200ms–500ms. CPU% is calculated from delta CPU time / delta wall time.
-
-### Anomaly Scoring
-
-The `AnomalyScorer` computes a composite score S ∈ [0, 1] using four vectors:
-
-- **CPU** (weight 0.40): Sigmoidal curve centered at 75% — `S = 1/(1+exp(-(cpu-75)/15))`
-- **Memory** (weight 0.35): `max(growth_rate/50MB_s, 0.7 × rss/1024MB)`
-- **I/O** (weight 0.15): `min(1.0, total_io/10MB_s)`
-- **Burst** (weight 0.10): `min(1.0, |cpu - ewma_cpu|/80)`
-
-**Burst suppression:** If fewer than 3 consecutive anomalous cycles, score is dampened by 35% to avoid quarantining legitimate transient spikes.
-
-### Graduated Quarantine
-
-| Stage | Score Threshold | Enforcement |
-|-------|----------------|-------------|
-| NORMAL | S < 0.40 | No constraints |
-| WATCHLIST | S ≥ 0.40 | Elevated monitoring frequency |
-| SOFT_QUARANTINE | S ≥ 0.65 | `nice +10`, 40% CPU duty cycle via SIGSTOP/SIGCONT |
-| HARD_QUARANTINE | S ≥ 0.85 | `nice +19`, 15% CPU duty cycle via SIGSTOP/SIGCONT |
-| TERMINATED | Persistent S ≥ 0.85 | SIGTERM → SIGKILL (last resort after timeout) |
-
-### Automated Restoration
-
-The `RestorationEngine` uses **hysteresis counters** (H=4 cycles) to verify behavioral stability before stepping down:
-
-```
-HARD_QUARANTINE → (4 cycles S < 0.40) → SOFT_QUARANTINE
-                → (4 cycles S < 0.40) → WATCHLIST
-                → (4 cycles S < 0.40) → NORMAL
+```bash
+python -m pytest tests/test_ml_pipeline.py tests/test_ml_training.py -v
 ```
 
-A **persistence watchdog** timer terminates processes that remain in HARD_QUARANTINE beyond a configurable timeout while still exhibiting anomalous behavior.
+### 4. Evaluate the detectors
 
----
+The repository includes scripts for comparing detector behavior and evaluating candidate models:
 
-## Performance
-
-### Detection Accuracy
-
-| Metric | ARQ | Static Rules | Basic ML |
-|--------|-----|--------------|----------|
-| Precision | 96.2% | 78.5% | 88.3% |
-| Recall | 94.8% | 82.1% | 85.7% |
-| F1-Score | 95.5% | 80.2% | 87.0% |
-| False Positive Rate | 3.8% | 21.5% | 11.7% |
-| Avg Detection Time | 1.2s | 0.5s | 2.8s |
-| Avg Quarantine Time | 0.8s | 3.2s | N/A |
-
-### Tail Latency Impact (Co-located Benign Service)
-
-| Strategy | P95 Latency | P99 Latency | State Loss | Process Preserved |
-|----------|-------------|-------------|------------|-------------------|
-| Unprotected | 142.30 ms | 312.50 ms | 0% | Yes (but degraded) |
-| Static Kill (SIGKILL) | 38.20 ms | 56.40 ms | 100% | No |
-| **ARQ (Proposed)** | **24.10 ms** | **31.20 ms** | **0%** | **Yes** |
-
-### Comparison with Existing Tools
-
-| Feature | ARQ | CloudWatch | Prometheus+Alert | Wazuh |
-|---------|-----|------------|-----------------|-------|
-| ML-based Detection | ✅ | ❌ | ❌ | Partial |
-| Adaptive Learning | ✅ | ❌ | ❌ | ❌ |
-| Auto Quarantine | ✅ | ❌ | ❌ | Partial |
-| Graduated Response | ✅ | ❌ | ❌ | ❌ |
-| Automated Recovery | ✅ | ❌ | ❌ | ❌ |
-| State Preservation | ✅ | N/A | N/A | ❌ |
-| Zero Dependencies | ✅ | ❌ | ❌ | ❌ |
-| Real-time Dashboard | ✅ | ✅ | ✅ | ✅ |
-| Open Source | ✅ | ❌ | ✅ | ✅ |
-
----
-
-## Mathematical Foundations
-
-### EWMA Baseline Tracking
-
-```
-μ(t) = α · x(t) + (1 - α) · μ(t-1)     where α = 0.25
+```bash
+python scripts/compare_detectors.py
+python scripts/evaluate_ml_candidate.py
+python scripts/test_rule_features.py
 ```
 
-### Composite Anomaly Score
+Check each script's options and prerequisites before running it. Evaluation results depend on the collected telemetry, workload scenarios, model artifact, and configuration.
 
-```
-S_raw = 0.40·S_cpu + 0.35·S_mem + 0.15·S_io + 0.10·S_burst
-S_eff = 0.65·S_raw    if C_anom < 3 and S_raw < 0.90   (burst suppression)
-S_eff = S_raw          otherwise
-```
+## Rule-Based Anomaly Scoring
 
-### Hysteresis Recovery Condition
+The rule-based engine uses exponentially weighted moving averages (EWMA) to track changing process behavior:
 
-```
-Step-down requires: Σ 𝕀(S_eff(t-i) < 0.40) = H    for i = 0..H-1, H = 4
-```
+\[
+\mu_t = \alpha x_t + (1-\alpha)\mu_{t-1}
+\]
 
----
+The documented baseline parameter is \(\alpha = 0.25\).
+
+The composite anomaly score combines CPU, memory, I/O, and burst-related components:
+
+\[
+S = 0.40S_{\mathrm{cpu}} + 0.35S_{\mathrm{mem}}
++ 0.15S_{\mathrm{io}} + 0.10S_{\mathrm{burst}}
+\]
+
+The rule-based score feeds the existing quarantine state machine. State transitions, enforcement, and restoration behavior are determined by the corresponding implementation and configuration.
+
+## Quarantine and Restoration
+
+ARQ implements graduated process responses:
+
+1. **Normal:** Process is monitored without quarantine restrictions.
+2. **Watchlist:** Process receives increased attention.
+3. **Soft Quarantine:** Initial resource restrictions are applied.
+4. **Hard Quarantine:** Stronger restrictions are applied.
+5. **Terminated:** A final response may be applied when configured conditions are met.
+
+The restoration engine uses hysteresis to require sustained evidence of recovery before stepping down quarantine restrictions.
+
+Exact thresholds, persistence settings, and enforcement behavior should be verified against the current source code and configuration rather than assumed from illustrative examples.
+
+## Evaluation and Reporting
+
+The project contains tooling to evaluate and compare detector behavior. Useful evaluation measures include:
+
+- False-positive rate on normal workloads.
+- Detection rate on anomalous workloads.
+- Precision, recall, and F1-score when reliable labels are available.
+- Detection delay.
+- Agreement and disagreement between rule-based and ML detections.
+- Resource and latency impact during quarantine.
+
+Performance figures should be reported only when they have been reproduced using a documented dataset, workload, configuration, and evaluation procedure. Results from a limited telemetry sample should not be treated as general production guarantees.
+
+## Current Limitations
+
+- **Shadow-mode ML:** ML detections do not currently control quarantine enforcement.
+- **Generalization:** Models trained on limited telemetry may not recognize every type of anomalous process behavior.
+- **False positives and false negatives:** Model thresholds require validation against representative normal and anomalous workloads.
+- **Platform differences:** Process telemetry and enforcement capabilities vary across operating systems.
+- **Permissions:** Some process-control operations may require additional privileges or may be restricted by the operating system.
+- **Safety:** Process termination and signal-based throttling can affect workload availability. Test with controlled processes before using the system on important workloads.
+
+## Future Work
+
+- Improve ML evaluation with broader, labeled workload datasets.
+- Validate candidate models across different normal and anomalous process scenarios.
+- Measure false-positive rates and detection performance over repeated trials.
+- Improve agreement analysis between rule-based and ML detectors.
+- Consider ML-assisted enforcement only after sufficient validation and safety testing.
+- Improve portability and document platform-specific behavior.
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
+This project uses the MIT License. See [LICENSE](LICENSE) for details.
