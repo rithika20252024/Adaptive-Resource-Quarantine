@@ -20,32 +20,72 @@ The rule-based engine remains responsible for quarantine decisions. The ML detec
 
 ## Architecture
 
+ARQ follows a modular architecture that combines adaptive rule-based anomaly detection with a machine-learning detector operating in shadow mode.
+
 ```text
-Running Processes
-       |
-       v
-Process Telemetry Collector
-       |
-       v
-Telemetry Feature Extraction
-       |
-       +---------------------------+
-       |                           |
-       v                           v
-Rule-Based Anomaly Scorer     Isolation Forest
-       |                           |
-       v                           v
-Quarantine State Machine     ML Score and Flag
-       |                     (Shadow Mode)
-       v                           |
-Process Enforcement                v
-       |                     Evaluation and
-       v                     Comparison
-Restoration Engine
-       |
-       v
-Web Dashboard and Reports
+┌─────────────────────────────────────────────┐
+│          1. PROCESS MONITORING               │
+│       Running and simulated processes        │
+└──────────────────────┬──────────────────────┘
+                       ▼
+┌─────────────────────────────────────────────┐
+│          2. TELEMETRY COLLECTION             │
+│       CPU, memory, I/O, thread metrics       │
+└──────────────────────┬──────────────────────┘
+                       ▼
+┌─────────────────────────────────────────────┐
+│          3. FEATURE EXTRACTION               │
+│     Prepare process telemetry for analysis   │
+└──────────────────────┬──────────────────────┘
+                       │
+              ┌────────┴────────┐
+              ▼                 ▼
+┌──────────────────────┐ ┌──────────────────────┐
+│ 4A. RULE-BASED       │ │ 4B. ISOLATION FOREST  │
+│ ANOMALY SCORER       │ │ ML DETECTOR           │
+│                      │ │                      │
+│ EWMA adaptive        │ │ Seven telemetry      │
+│ baselines and        │ │ features; anomaly    │
+│ composite score      │ │ score and flag       │
+└──────────┬───────────┘ └──────────┬───────────┘
+           │                        │
+           ▼                        ▼
+┌──────────────────────┐ ┌──────────────────────┐
+│ 5. QUARANTINE        │ │ ML EVALUATION        │
+│ STATE MACHINE        │ │ AND COMPARISON       │
+│                      │ │                      │
+│ Rule-based score     │ │ Shadow-mode output   │
+│ controls transitions │ │ does not enforce     │
+└──────────┬───────────┘ └──────────┬───────────┘
+           │                        │
+           ▼                        │
+┌──────────────────────┐             │
+│ 6. ENFORCEMENT       │             │
+│ CONTROLLER           │             │
+│                      │             │
+│ Priority adjustment  │             │
+│ and CPU throttling   │             │
+└──────────┬───────────┘             │
+           ▼                        │
+┌──────────────────────┐             │
+│ 7. RESTORATION       │             │
+│ ENGINE               │             │
+│                      │             │
+│ Hysteresis-based     │             │
+│ recovery             │             │
+└──────────┬───────────┘             │
+           └────────────┬────────────┘
+                        ▼
+┌─────────────────────────────────────────────┐
+│          8. WEB DASHBOARD AND REPORTING      │
+│  Process status, scores, stages and results  │
+└─────────────────────────────────────────────┘
 ```
+
+**Architecture note:** The rule-based detector controls quarantine, enforcement, and restoration. The Isolation Forest detector runs in shadow mode and provides additional anomaly signals for evaluation without independently triggering enforcement.
+
+---
+
 
 **Important:** The rule-based score drives quarantine and restoration. ML output is used for monitoring and evaluation; it does not independently trigger enforcement.
 
@@ -108,6 +148,67 @@ quarant/
 ```
 
 Additional files and tests may be present in the repository.
+
+## System Modules and Inputs/Outputs
+
+| Module | Input | Output |
+|---|---|---|
+| Process Monitor | Running processes | Process identifiers and telemetry samples |
+| Feature Extraction | Raw process metrics | Structured feature vectors |
+| Rule-Based Anomaly Scorer | Process metrics and EWMA baselines | Rule-based anomaly score |
+| Isolation Forest | Seven telemetry features | ML anomaly score and anomaly flag |
+| Quarantine State Machine | Rule-based score and current state | Quarantine stage |
+| Enforcement Controller | Quarantine stage | Resource restriction actions |
+| Restoration Engine | Current stage and recovery observations | Restoration or step-down decision |
+| Dashboard and Reporting | Telemetry, scores, stages and ML output | Visual status and diagnostic results |
+
+### Isolation Forest Features
+
+The ML detector uses the following seven features:
+
+1. `cpu_percent`
+2. `memory_rss_mb`
+3. `memory_vms_mb`
+4. `memory_growth_mb_s`
+5. `io_read_kb_s`
+6. `io_write_kb_s`
+7. `num_threads`
+
+The displayed ML score is a scaled anomaly score, not a calibrated probability.
+
+## Evaluation and Performance Metrics
+
+### Confusion Matrix
+
+A confusion matrix can be used to evaluate the ML detector against labelled test data.
+
+|  | Actual Anomalous | Actual Normal |
+|---|---:|---:|
+| **Predicted Anomalous** | True Positive (TP) | False Positive (FP) |
+| **Predicted Normal** | False Negative (FN) | True Negative (TN) |
+
+### Evaluation Metrics
+
+| Metric | Formula | Purpose |
+|---|---|---|
+| Precision | TP / (TP + FP) | Measures how many predicted anomalies were actual anomalies |
+| Recall | TP / (TP + FN) | Measures how many actual anomalies were detected |
+| F1-score | 2TP / (2TP + FP + FN) | Combines precision and recall |
+| False Positive Rate | FP / (FP + TN) | Measures how often normal samples are incorrectly flagged |
+
+### Detector Comparison
+
+| Evaluation Measure | Rule-Based Detector | Isolation Forest |
+|---|---|---|
+| Anomaly score | Available | Available |
+| Anomaly flag | Based on rule-based logic | Based on calibrated model threshold |
+| Quarantine enforcement | Controls quarantine | Shadow mode only |
+| Precision and recall | To be measured on labelled data | To be measured on labelled data |
+| Detection latency | To be measured | To be measured |
+
+**Evaluation note:** Populate numerical performance results only after running both detectors on the same labelled evaluation dataset. Unlabelled normal telemetry can help estimate flag rates, but cannot by itself establish precision, recall, or F1-score.
+
+
 
 ## Installation
 
