@@ -6,6 +6,7 @@ and anomaly monitoring over HTTP.
 
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 import json
+import math
 import os
 from socketserver import ThreadingMixIn
 import threading
@@ -16,6 +17,8 @@ from urllib.parse import urlparse
 from arq.core.anomaly_scorer import AnomalyScorer
 from arq.core.monitor import ProcessMonitor
 from arq.core.process_model import ProcessProfile, QuarantineStage
+from arq.core.ml_pipeline import extract_features
+from arq.core.ml_training import load_isolation_forest
 from arq.core.quarantine_controller import QuarantineController
 from arq.core.restoration_engine import RestorationEngine
 
@@ -32,6 +35,19 @@ class ARQDashboardState:
     def __init__(self) -> None:
         self.monitor = ProcessMonitor()
         self.scorer = AnomalyScorer()
+        # Shadow mode: ML scores are recorded but never control quarantine.
+        self.ml_artifact = None
+        self.ml_load_error = None
+        model_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+            "models", "arq", "isolation_forest.joblib",
+        )
+        if os.path.isfile(model_path):
+            try:
+                self.ml_artifact = load_isolation_forest(model_path)
+            except Exception as exc:
+                # Keep the dashboard operational if the optional model is invalid.
+                self.ml_load_error = str(exc)
         self.controller = QuarantineController()
         self.restoration = RestorationEngine(self.controller)
         self.profiles: Dict[int, ProcessProfile] = {}
@@ -110,6 +126,30 @@ class ARQDashboardState:
                 if m and pid in self.profiles:
                     prof = self.profiles[pid]
                     score = self.scorer.evaluate(prof, m)
+
+                    # Shadow-only ML inference: never pass this score to
+                    # RestorationEngine or QuarantineController.
+                    ml_score = None
+                    ml_anomaly = None
+                    if self.ml_artifact is not None:
+                        try:
+                            features = extract_features(m)
+                            model = self.ml_artifact["model"]
+                            raw_anomaly = -float(
+                                model.decision_function([features])[0]
+                            )
+                            threshold = float(
+                                self.ml_artifact["calibration_threshold"]
+                            )
+                            temperature = max(abs(threshold), 1e-6)
+                            x = max(-60.0, min(
+                                60.0, (raw_anomaly - threshold) / temperature
+                            ))
+                            ml_score = 1.0 / (1.0 + math.exp(-x))
+                            ml_anomaly = raw_anomaly > threshold
+                        except Exception as exc:
+                            self.ml_load_error = str(exc)
+
                     stage, action = self.restoration.process_cycle(prof, score)
                     snapshot.append({
                         "pid": pid,
@@ -118,6 +158,9 @@ class ARQDashboardState:
                         "mem_rss_mb": m.memory_rss_mb,
                         "io_kb_s": m.io_read_kb_s + m.io_write_kb_s,
                         "score": score,
+                        "ml_score": ml_score,
+                        "ml_anomaly": ml_anomaly,
+                        "ml_mode": "shadow",
                         "stage": prof.stage.name,
                         "duty_cycle": prof.enforced_duty_cycle,
                         "action": action,
@@ -165,15 +208,24 @@ class DashboardRequestHandler(SimpleHTTPRequestHandler):
                 payload = {"processes": [], "history": []}
             else:
                 with self.state.lock:
+                    latest_by_pid = {}
+                    for entry in reversed(self.state.history):
+                        for item in entry.get("processes", []):
+                            latest_by_pid.setdefault(item.get("pid"), item)
+
                     procs = []
                     for pid, prof in self.state.profiles.items():
                         m = prof.recent_metrics[-1] if prof.recent_metrics else None
+                        latest = latest_by_pid.get(pid, {})
                         procs.append({
                             "pid": pid,
                             "name": prof.name,
                             "cpu_pct": m.cpu_percent if m else 0.0,
                             "mem_mb": m.memory_rss_mb if m else 0.0,
                             "score": prof.current_score,
+                            "ml_score": latest.get("ml_score"),
+                            "ml_anomaly": latest.get("ml_anomaly"),
+                            "ml_mode": latest.get("ml_mode", "shadow"),
                             "stage": prof.stage.name,
                             "duty_cycle": prof.enforced_duty_cycle,
                             "reason": prof.quarantine_reason,

@@ -310,7 +310,9 @@
           <th>Process Name</th>
           <th>CPU Usage</th>
           <th>Memory RSS</th>
-          <th>Anomaly Score</th>
+          <th>Rule-Based Score</th>
+          <th>ML Score (Shadow)</th>
+          <th>ML Status</th>
           <th>Quarantine Stage</th>
           <th>Duty Quota</th>
           <th>Action</th>
@@ -318,7 +320,7 @@
       </thead>
       <tbody id="procTableBody">
         <tr>
-          <td colspan="8" style="text-align:center; color: var(--text-muted); padding: 30px;">
+          <td colspan="10" style="text-align:center; color: var(--text-muted); padding: 30px;">
             Initializing telemetry monitor...
           </td>
         </tr>
@@ -348,13 +350,20 @@
 
       const tbody = document.getElementById('procTableBody');
       if (procs.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 24px; color: var(--text-muted);">No active monitored workloads. Click buttons above to spawn simulated anomalies.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 24px; color: var(--text-muted);">No active monitored workloads. Click buttons above to spawn simulated anomalies.</td></tr>';
         return;
       }
 
       tbody.innerHTML = procs.map(p => {
         const score = typeof p.score === 'number' ? p.score : 0.0;
         const scorePct = Math.min(100, Math.max(0, Math.round(score * 100)));
+        const mlScore = typeof p.ml_score === 'number' ? p.ml_score : null;
+        const mlScoreText = mlScore === null ? 'Unavailable' : mlScore.toFixed(2);
+        const mlStatus = mlScore === null
+          ? '<span class="badge">Model unavailable</span>'
+          : (p.ml_anomaly
+              ? '<span class="badge badge-HARD_QUARANTINE">Anomaly flagged</span>'
+              : '<span class="badge badge-NORMAL">No anomaly flagged</span>');
 
         let fillColor = 'var(--green)';
         if (score >= 0.85) {
@@ -390,6 +399,8 @@
             <div class="score-meter"><div class="score-fill" style="width: ${scorePct}%; background: ${fillColor};"></div></div>
             <strong>${score.toFixed(2)}</strong>
           </td>
+          <td>${mlScoreText}</td>
+          <td>${mlStatus}</td>
           <td>${stageBadge}</td>
           <td>${dutyStr}</td>
           <td>${actionButtons}</td>

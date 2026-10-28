@@ -96,6 +96,29 @@ def cmd_demo(args) -> None:
         burner.stop()
 
 
+
+def cmd_train_ml(args) -> None:
+    """Train and calibrate the Isolation Forest detector."""
+    from arq.core.ml_training import train_isolation_forest
+
+    try:
+        result = train_isolation_forest(
+            data_path=args.data,
+            output_dir=args.output_dir,
+            contamination=args.contamination,
+            random_state=args.seed,
+        )
+    except (ValueError, OSError) as exc:
+        print(f"ML training failed: {exc}", file=sys.stderr)
+        sys.exit(2)
+
+    print("Isolation Forest training completed.")
+    print(f"Model: {result['model_path']}")
+    print(f"Training records: {result['training_rows']}")
+    print(f"Calibration records: {result['calibration_rows']}")
+    print(f"Calibration threshold: {result['calibration_threshold']:.6f}")
+
+
 def cmd_web(args) -> None:
     """Launch real-time web dashboard."""
     from arq.web.server import run_server
@@ -115,6 +138,15 @@ def main() -> None:
     # demo
     subparsers.add_parser("demo", help="Run interactive quarantine & restoration demonstration")
 
+    # optional ML training
+    p_train = subparsers.add_parser(
+        "train-ml", help="Train and calibrate the Isolation Forest detector"
+    )
+    p_train.add_argument("--data", required=True, help="Normal telemetry JSONL file")
+    p_train.add_argument("--output-dir", default="models/arq", help="Model output directory")
+    p_train.add_argument("--contamination", type=float, default=0.05)
+    p_train.add_argument("--seed", type=int, default=42)
+
     # web
     p_web = subparsers.add_parser("web", help="Launch real-time web dashboard")
     p_web.add_argument("--port", type=int, default=8080, help="HTTP port (default: 8080)")
@@ -128,6 +160,8 @@ def main() -> None:
         cmd_benchmark(args)
     elif args.command == "demo":
         cmd_demo(args)
+    elif args.command == "train-ml":
+        cmd_train_ml(args)
     elif args.command == "web":
         cmd_web(args)
     else:
