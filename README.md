@@ -257,3 +257,18 @@ Performance figures should be reported only when they have been reproduced using
 ## License
 
 This project uses the MIT License. See [LICENSE](LICENSE) for details.
+## Project Novelty and Contributions
+
+The key contribution of Adaptive Resource Quarantine (ARQ) is its approach to handling anomalous process behavior through graduated resource restrictions and recovery, rather than relying only on detection or immediate process termination.
+
+The project's main contributions are:
+
+- **Graduated response mechanism:** Organizes process responses into multiple stages, from normal monitoring to increasingly restrictive quarantine.
+- **Adaptive behavioral baselines:** Uses Exponentially Weighted Moving Average (EWMA) baselines to track changing process behavior and support anomaly scoring.
+- **Hysteresis-based restoration:** Requires sustained evidence of recovery before reducing quarantine restrictions, helping avoid premature restoration.
+- **Complementary ML evaluation:** Integrates an Isolation Forest detector in shadow mode so its anomaly signals can be compared with the rule-based detector without directly controlling enforcement.
+
+**Current scope:** The rule-based detector controls quarantine and restoration. The ML detector is currently used for monitoring and evaluation, not autonomous enforcement.
+
+Together, these components provide a framework for studying how adaptive detection, graduated process control, and controlled recovery can be combined in a process-monitoring system.
+
