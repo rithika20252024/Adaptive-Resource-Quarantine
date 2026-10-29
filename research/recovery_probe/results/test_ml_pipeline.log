@@ -1,0 +1,12 @@
+test_detector_without_models (tests.test_ml_pipeline.TestMLPipeline.test_detector_without_models) ... ok
+test_feature_extraction (tests.test_ml_pipeline.TestMLPipeline.test_feature_extraction) ... ok
+test_hybrid_score (tests.test_ml_pipeline.TestMLPipeline.test_hybrid_score) ... ok
+test_invalid_weights_rejected (tests.test_ml_pipeline.TestMLPipeline.test_invalid_weights_rejected) ... ok
+test_non_finite_feature_rejected (tests.test_ml_pipeline.TestMLPipeline.test_non_finite_feature_rejected) ... ok
+test_rule_score_fallback (tests.test_ml_pipeline.TestMLPipeline.test_rule_score_fallback) ... ok
+test_score_is_clamped (tests.test_ml_pipeline.TestMLPipeline.test_score_is_clamped) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.000s
+
+OK

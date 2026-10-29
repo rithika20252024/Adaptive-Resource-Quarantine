@@ -1,0 +1,16 @@
+{
+  "pages": 40,
+  "reviews": [
+    "I",
+    "II",
+    "III"
+  ],
+  "idf_sections": 10,
+  "scholarly_references": 20,
+  "all_pages_visually_inspected": true,
+  "layout": "Letter, Arial 12 body, 18-point bold cover titles, thin borders and unshaded grid tables",
+  "text_overflow_observed": false,
+  "sha256": "96dca57b13361fd3353b52b5a6dbad5a2aaa60ab35b9990f990caaeaf852de7d",
+  "source_commit": "40e3d28",
+  "validation": "32 methods passed; optional ML dependency missing; macOS native monitor signal 11; new policy synthetic only"
+}

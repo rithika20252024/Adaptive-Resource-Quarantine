@@ -1,0 +1,10 @@
+test_burst_suppression (tests.test_anomaly_scorer.TestAnomalyScorer.test_burst_suppression) ... ok
+test_ewma_tracking (tests.test_anomaly_scorer.TestAnomalyScorer.test_ewma_tracking) ... ok
+test_high_cpu_returns_high_score (tests.test_anomaly_scorer.TestAnomalyScorer.test_high_cpu_returns_high_score) ... ok
+test_low_usage_returns_low_score (tests.test_anomaly_scorer.TestAnomalyScorer.test_low_usage_returns_low_score) ... ok
+test_score_range (tests.test_anomaly_scorer.TestAnomalyScorer.test_score_range) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.000s
+
+OK

@@ -1,0 +1,17 @@
+{
+  "passing_modules": {
+    "test_anomaly_scorer": 5,
+    "test_ml_pipeline": 7,
+    "test_quarantine": 5,
+    "test_restoration": 3,
+    "test_recovery_probe": 12
+  },
+  "passing_test_count": 32,
+  "unresolved_existing_checks": {
+    "test_ml_training": "Import failed: optional joblib dependency unavailable",
+    "test_monitor": "Native process exited with signal 11 on macOS; unchanged monitor source. Not validated for live use."
+  },
+  "new_default_dashboard_integration": false,
+  "validation_scope": "12 new unit tests plus synthetic model; no live deployment or patentability certification",
+  "publication_status": "Prepared for repository publication at user request, 30 October 2026; validate remote commit separately."
+}

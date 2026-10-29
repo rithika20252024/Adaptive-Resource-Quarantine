@@ -1,0 +1,30 @@
+[
+  {
+    "module": "tests.test_anomaly_scorer",
+    "returncode": 0
+  },
+  {
+    "module": "tests.test_ml_pipeline",
+    "returncode": 0
+  },
+  {
+    "module": "tests.test_quarantine",
+    "returncode": 0
+  },
+  {
+    "module": "tests.test_restoration",
+    "returncode": 0
+  },
+  {
+    "module": "tests.test_recovery_probe",
+    "returncode": 0
+  },
+  {
+    "module": "tests.test_ml_training",
+    "returncode": 1
+  },
+  {
+    "module": "tests.test_monitor",
+    "returncode": -11
+  }
+]

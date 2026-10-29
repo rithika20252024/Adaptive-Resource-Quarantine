@@ -1,0 +1,14 @@
+test_burst_suppression (test_anomaly_scorer.TestAnomalyScorer.test_burst_suppression) ... ok
+test_ewma_tracking (test_anomaly_scorer.TestAnomalyScorer.test_ewma_tracking) ... ok
+test_high_cpu_returns_high_score (test_anomaly_scorer.TestAnomalyScorer.test_high_cpu_returns_high_score) ... ok
+test_low_usage_returns_low_score (test_anomaly_scorer.TestAnomalyScorer.test_low_usage_returns_low_score) ... ok
+test_score_range (test_anomaly_scorer.TestAnomalyScorer.test_score_range) ... ok
+test_detector_without_models (test_ml_pipeline.TestMLPipeline.test_detector_without_models) ... ok
+test_feature_extraction (test_ml_pipeline.TestMLPipeline.test_feature_extraction) ... ok
+test_hybrid_score (test_ml_pipeline.TestMLPipeline.test_hybrid_score) ... ok
+test_invalid_weights_rejected (test_ml_pipeline.TestMLPipeline.test_invalid_weights_rejected) ... ok
+test_non_finite_feature_rejected (test_ml_pipeline.TestMLPipeline.test_non_finite_feature_rejected) ... ok
+test_rule_score_fallback (test_ml_pipeline.TestMLPipeline.test_rule_score_fallback) ... ok
+test_score_is_clamped (test_ml_pipeline.TestMLPipeline.test_score_is_clamped) ... ok
+test_ml_training (unittest.loader._FailedTest.test_ml_training) ... ERROR
+test_cpu_delta_second_sample (test_monitor.TestProcessMonitor.test_cpu_delta_second_sample) ... 

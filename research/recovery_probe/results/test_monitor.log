@@ -1,0 +1,9 @@
+test_cpu_delta_second_sample (tests.test_monitor.TestProcessMonitor.test_cpu_delta_second_sample) ... ok
+test_sample_all (tests.test_monitor.TestProcessMonitor.test_sample_all) ... ok
+test_sample_invalid_pid (tests.test_monitor.TestProcessMonitor.test_sample_invalid_pid) ... ok
+test_sample_self (tests.test_monitor.TestProcessMonitor.test_sample_self) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.103s
+
+OK

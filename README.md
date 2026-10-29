@@ -383,3 +383,11 @@ Precision, recall, and F1-score are not reported here because the supplied evalu
 ## License
 
 This project uses the MIT License. See [LICENSE](LICENSE) for details.
+
+## Local recovery-verification research extension
+
+An opt-in bracketed release-probe prototype and synthetic comparison are documented in [research/recovery_probe/README.md](research/recovery_probe/README.md). It checks for restriction-masked CPU demand and protected-service impact before one duty relaxation. It is not enabled in default enforcement, does not establish patentability, and has not been validated as a production recovery mechanism.
+
+## Combined academic report and technical disclosure
+
+[Download Reviews I, II, III and IDF B](output/pdf/ARQ_Combined_Reviews_I_II_III_and_IDF_B.pdf). The 40-page report follows the supplied Arial layout and separates historical outputs, current module tests and synthetic recovery-policy results. See [report guide](docs/REPORT_GUIDE.md) for the page map, evidence limits and rebuild instructions. Patent claims are draft candidates; patentability is not established.

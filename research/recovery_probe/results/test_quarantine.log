@@ -1,0 +1,10 @@
+test_apply_hard_quarantine (tests.test_quarantine.TestQuarantineController.test_apply_hard_quarantine) ... ok
+test_apply_soft_quarantine (tests.test_quarantine.TestQuarantineController.test_apply_soft_quarantine) ... ok
+test_apply_watchlist (tests.test_quarantine.TestQuarantineController.test_apply_watchlist) ... ok
+test_initial_stage_is_normal (tests.test_quarantine.TestQuarantineController.test_initial_stage_is_normal) ... ok
+test_release_to_normal (tests.test_quarantine.TestQuarantineController.test_release_to_normal) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.032s
+
+OK

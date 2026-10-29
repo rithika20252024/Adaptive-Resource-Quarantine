@@ -1,0 +1,17 @@
+test_absolute_slo_rejects (tests.test_recovery_probe.TestRecoveryProbe.test_absolute_slo_rejects) ... ok
+test_adapter_updates_actual_throttler (tests.test_recovery_probe.TestRecoveryProbe.test_adapter_updates_actual_throttler) ... ok
+test_budget_blocks_actuation (tests.test_recovery_probe.TestRecoveryProbe.test_budget_blocks_actuation) ... ok
+test_commit_failure_restores (tests.test_recovery_probe.TestRecoveryProbe.test_commit_failure_restores) ... ok
+test_drift_is_inconclusive (tests.test_recovery_probe.TestRecoveryProbe.test_drift_is_inconclusive) ... ok
+test_invalid_observations_fail_closed (tests.test_recovery_probe.TestRecoveryProbe.test_invalid_observations_fail_closed) ... ok
+test_invalid_policy (tests.test_recovery_probe.TestRecoveryProbe.test_invalid_policy) ... ok
+test_load_drift_is_inconclusive (tests.test_recovery_probe.TestRecoveryProbe.test_load_drift_is_inconclusive) ... ok
+test_protected_harm_rejects_even_below_absolute_slo (tests.test_recovery_probe.TestRecoveryProbe.test_protected_harm_rejects_even_below_absolute_slo) ... ok
+test_recovered_demand_commits_after_two_complete_brackets (tests.test_recovery_probe.TestRecoveryProbe.test_recovered_demand_commits_after_two_complete_brackets) ... ok
+test_sampler_exception_restores (tests.test_recovery_probe.TestRecoveryProbe.test_sampler_exception_restores) ... ok
+test_throttled_cpu_is_not_recovery (tests.test_recovery_probe.TestRecoveryProbe.test_throttled_cpu_is_not_recovery) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.001s
+
+OK
