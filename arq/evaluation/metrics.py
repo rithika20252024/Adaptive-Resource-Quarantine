@@ -4,7 +4,7 @@ Fulfills Project Objective: evaluating CPU, Memory, Response Time, Throughput, R
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 
 @dataclass
@@ -20,8 +20,8 @@ class BenchmarkResult:
     p99_latency_ms: float
     throughput_rps: float
     target_process_completed: bool
-    state_loss_rate_pct: float
-    recovery_time_s: float
+    state_loss_rate_pct: Optional[float]
+    recovery_time_s: Optional[float]
     peak_cpu_percent: float
     peak_memory_mb: float
 
@@ -38,7 +38,7 @@ class BenchmarkResult:
             "throughput_rps": round(self.throughput_rps, 1),
             "process_survived": self.target_process_completed,
             "state_loss_pct": self.state_loss_rate_pct,
-            "recovery_time_s": round(self.recovery_time_s, 2),
+            "recovery_time_s": round(self.recovery_time_s, 2) if self.recovery_time_s is not None else None,
             "peak_cpu_pct": round(self.peak_cpu_percent, 1),
             "peak_mem_mb": round(self.peak_memory_mb, 1)
         }

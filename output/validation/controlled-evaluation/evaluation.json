@@ -1,0 +1,178 @@
+{
+  "schema": 1,
+  "evaluated_at": 1793308990.781655,
+  "detector": "isolation_forest",
+  "dataset_sha256": "3a9f249b2556d9c6408c8aba93dbf620aed92c5b611b473cb2547965bf1b2a98",
+  "candidate_sha256": "a20bb00f01be32e4ae7cde3234372046a47de2dcda2954ed6e01397cd1585072",
+  "partition_counts": {
+    "train": 40,
+    "calibration": 40,
+    "test": 100
+  },
+  "group_counts": {
+    "train": 2,
+    "calibration": 2,
+    "test": 5
+  },
+  "test_normal": 40,
+  "test_anomalous": 60,
+  "rule_metrics": {
+    "tp": 37,
+    "fp": 0,
+    "tn": 40,
+    "fn": 23,
+    "precision": 1.0,
+    "recall": 0.6166666666666667,
+    "f1": 0.7628865979381443,
+    "false_positive_rate": 0.0,
+    "false_negative_rate": 0.38333333333333336
+  },
+  "candidate_metrics": {
+    "tp": 0,
+    "fp": 2,
+    "tn": 38,
+    "fn": 60,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "false_positive_rate": 0.05,
+    "false_negative_rate": 1.0
+  },
+  "candidate_by_scenario": {
+    "benign_burst": {
+      "tp": 0,
+      "fp": 2,
+      "tn": 18,
+      "fn": 0,
+      "precision": 0.0,
+      "recall": null,
+      "f1": 0.0,
+      "false_positive_rate": 0.1,
+      "false_negative_rate": null
+    },
+    "bounded_memory_growth": {
+      "tp": 0,
+      "fp": 0,
+      "tn": 0,
+      "fn": 20,
+      "precision": null,
+      "recall": 0.0,
+      "f1": 0.0,
+      "false_positive_rate": null,
+      "false_negative_rate": 1.0
+    },
+    "idle": {
+      "tp": 0,
+      "fp": 0,
+      "tn": 20,
+      "fn": 0,
+      "precision": null,
+      "recall": null,
+      "f1": null,
+      "false_positive_rate": 0.0,
+      "false_negative_rate": null
+    },
+    "io_stress": {
+      "tp": 0,
+      "fp": 0,
+      "tn": 0,
+      "fn": 20,
+      "precision": null,
+      "recall": 0.0,
+      "f1": 0.0,
+      "false_positive_rate": null,
+      "false_negative_rate": 1.0
+    },
+    "sustained_cpu": {
+      "tp": 0,
+      "fp": 0,
+      "tn": 0,
+      "fn": 20,
+      "precision": null,
+      "recall": 0.0,
+      "f1": 0.0,
+      "false_positive_rate": null,
+      "false_negative_rate": 1.0
+    }
+  },
+  "model_fit_trials": [
+    {
+      "seed": 42,
+      "metrics": {
+        "tp": 0,
+        "fp": 2,
+        "tn": 38,
+        "fn": 60,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "false_positive_rate": 0.05,
+        "false_negative_rate": 1.0
+      },
+      "agreement_with_rule": 0.61
+    },
+    {
+      "seed": 43,
+      "metrics": {
+        "tp": 20,
+        "fp": 0,
+        "tn": 40,
+        "fn": 40,
+        "precision": 1.0,
+        "recall": 0.3333333333333333,
+        "f1": 0.5,
+        "false_positive_rate": 0.0,
+        "false_negative_rate": 0.6666666666666666
+      },
+      "agreement_with_rule": 0.83
+    },
+    {
+      "seed": 44,
+      "metrics": {
+        "tp": 0,
+        "fp": 1,
+        "tn": 39,
+        "fn": 60,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "false_positive_rate": 0.025,
+        "false_negative_rate": 1.0
+      },
+      "agreement_with_rule": 0.62
+    }
+  ],
+  "summary": {
+    "precision": {
+      "mean": 0.3333333333333333,
+      "sample_std": 0.5773502691896257
+    },
+    "recall": {
+      "mean": 0.1111111111111111,
+      "sample_std": 0.19245008972987523
+    },
+    "f1": {
+      "mean": 0.16666666666666666,
+      "sample_std": 0.28867513459481287
+    },
+    "false_positive_rate": {
+      "mean": 0.025,
+      "sample_std": 0.025
+    },
+    "false_negative_rate": {
+      "mean": 0.8888888888888888,
+      "sample_std": 0.1924500897298753
+    }
+  },
+  "agreement": {
+    "both_anomalous": 0,
+    "rule_only": 37,
+    "ml_only": 2,
+    "both_normal": 61
+  },
+  "limitations": [
+    "Repeated fits use the same held-out runs; they are not independent workload trials.",
+    "Supplied labels and workload representativeness require human verification.",
+    "No guarantee for unobserved workloads or cross-host generalization."
+  ]
+}

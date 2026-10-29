@@ -60,19 +60,21 @@ class LatencyProbeService:
         return self.process.pid or 0
 
     def stop_and_collect(self) -> List[float]:
+        import queue
         self.stop_event.set()
-        if self.process.is_alive():
-            self.process.join(timeout=2.0)
+        latencies = []
+        if self.process.pid is not None:
+            try:
+                latencies = self.results_queue.get(timeout=3.0)
+            except queue.Empty:
+                pass
+            self.process.join(timeout=1.0)
             if self.process.is_alive():
-                self.process.terminate()
-                self.process.join(timeout=1.0)
-
-        latencies: List[float] = []
-        try:
-            while not self.results_queue.empty():
-                latencies.extend(self.results_queue.get_nowait())
-        except Exception:
-            pass
+                self.process.terminate(); self.process.join(timeout=1.0)
+            if self.process.is_alive():
+                self.process.kill(); self.process.join(timeout=1.0)
+        self.results_queue.close()
+        self.results_queue.join_thread()
         return latencies
 
     @staticmethod
@@ -88,8 +90,8 @@ class LatencyProbeService:
             }
         sorted_l = sorted(latencies)
         n = len(sorted_l)
-        p95_idx = int(0.95 * n)
-        p99_idx = int(0.99 * n)
+        p95_idx = __import__("math").ceil(0.95 * n) - 1
+        p99_idx = __import__("math").ceil(0.99 * n) - 1
         return {
             "count": n,
             "mean": round(statistics.mean(sorted_l), 3),

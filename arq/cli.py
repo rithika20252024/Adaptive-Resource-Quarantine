@@ -25,13 +25,13 @@ def cmd_benchmark(args) -> None:
     r1 = runner.run_unprotected()
     print(f"      Done: P95={r1.p95_latency_ms:.2f}ms, P99={r1.p99_latency_ms:.2f}ms")
 
-    print("\n[2/3] Running Static Kill (CFS/OOM) trial...")
+    print("\n[2/3] Running Static termination trial...")
     r2 = runner.run_static_kill()
-    print(f"      Done: P95={r2.p95_latency_ms:.2f}ms, State Loss={r2.state_loss_rate_pct:.0f}%")
+    print(f"      Done: P95={r2.p95_latency_ms:.2f}ms, State Loss=not measured")
 
     print("\n[3/3] Running Adaptive Resource Quarantine trial...")
     r3 = runner.run_adaptive_quarantine()
-    print(f"      Done: P95={r3.p95_latency_ms:.2f}ms, State Loss={r3.state_loss_rate_pct:.0f}%")
+    print(f"      Done: P95={r3.p95_latency_ms:.2f}ms, State Loss=not measured")
 
     results = [r1, r2, r3]
     print("\n" + ReportGenerator.format_ascii_table(results) + "\n")
@@ -122,7 +122,7 @@ def cmd_train_ml(args) -> None:
 def cmd_web(args) -> None:
     """Launch real-time web dashboard."""
     from arq.web.server import run_server
-    run_server(port=args.port)
+    run_server(port=args.port, enforce=args.enforce_managed, ml_mode=args.ml_mode, model_path=args.ml_model, validation_path=args.ml_validation, allow_termination=args.allow_termination)
 
 
 def main() -> None:
@@ -151,6 +151,22 @@ def main() -> None:
     p_web = subparsers.add_parser("web", help="Launch real-time web dashboard")
     p_web.add_argument("--port", type=int, default=8080, help="HTTP port (default: 8080)")
 
+    p_web.add_argument('--enforce-managed', action='store_true', help='Actuate only children spawned by this dashboard; default dry-run')
+    p_web.add_argument('--allow-termination', action='store_true', help='Opt in to persistent-offender termination of managed children')
+    p_web.add_argument('--ml-mode', choices=['shadow','assist'], default='shadow')
+    p_web.add_argument('--ml-model')
+    p_web.add_argument('--ml-validation', help='Evaluation report matching the model SHA256')
+    p_eval=subparsers.add_parser('evaluate-labelled', help='Run-disjoint labelled evaluation with repeated model fits')
+    p_eval.add_argument('--data',required=True)
+    p_eval.add_argument('--output-dir',default='output/validation/labelled')
+    p_eval.add_argument('--repeats',type=int,default=5)
+    p_eval.add_argument('--seed',type=int,default=42)
+    p_eval.add_argument('--detector',choices=['isolation_forest','support_if'],default='isolation_forest')
+    p_repeat=subparsers.add_parser('benchmark-repeat',help='Randomized-order repeated live trials on owned workloads')
+    p_repeat.add_argument('--repeats',type=int,default=3)
+    p_repeat.add_argument('--duration',type=float,default=2)
+    p_repeat.add_argument('--output',default='output/validation/repeated-benchmark.json')
+    p_repeat.add_argument('--seed',type=int,default=42)
     args = parser.parse_args()
     if not args.command:
         parser.print_help()
@@ -162,6 +178,15 @@ def main() -> None:
         cmd_demo(args)
     elif args.command == "train-ml":
         cmd_train_ml(args)
+    elif args.command == 'evaluate-labelled':
+        from arq.evaluation.labelled import evaluate
+        import json
+        result=evaluate(args.data,args.output_dir,args.repeats,args.seed,args.detector)
+        print(json.dumps(result,indent=2))
+    elif args.command == 'benchmark-repeat':
+        from arq.evaluation.repeated import run_repeated
+        import json
+        print(json.dumps(run_repeated(args.repeats,args.duration,args.seed,args.output),indent=2))
     elif args.command == "web":
         cmd_web(args)
     else:

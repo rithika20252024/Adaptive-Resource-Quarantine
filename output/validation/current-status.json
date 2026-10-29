@@ -1,0 +1,16 @@
+{
+  "platform": "macOS-26.5.2-arm64-arm-64bit",
+  "python": "3.12.14",
+  "dependencies": {
+    "numpy": "2.3.5",
+    "scikit-learn": "1.9.1",
+    "joblib": "1.6.0",
+    "scipy": "1.18.1"
+  },
+  "tested_os": "macOS arm64",
+  "remote_linux_ci_run": false,
+  "regression_summary": "Ran 57 tests in 2.009s",
+  "regression_passed": true,
+  "controlled_collection": "Not representative of deployment workloads",
+  "ml_assistance_approved": false
+}

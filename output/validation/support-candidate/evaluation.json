@@ -1,0 +1,178 @@
+{
+  "schema": 1,
+  "evaluated_at": 1793308992.81106,
+  "detector": "support_if",
+  "dataset_sha256": "3a9f249b2556d9c6408c8aba93dbf620aed92c5b611b473cb2547965bf1b2a98",
+  "candidate_sha256": "147a657bba0e43b9fbe3e81c49ef34dc18748839d704ceb4de44ec793c6847e4",
+  "partition_counts": {
+    "train": 40,
+    "calibration": 40,
+    "test": 100
+  },
+  "group_counts": {
+    "train": 2,
+    "calibration": 2,
+    "test": 5
+  },
+  "test_normal": 40,
+  "test_anomalous": 60,
+  "rule_metrics": {
+    "tp": 37,
+    "fp": 0,
+    "tn": 40,
+    "fn": 23,
+    "precision": 1.0,
+    "recall": 0.6166666666666667,
+    "f1": 0.7628865979381443,
+    "false_positive_rate": 0.0,
+    "false_negative_rate": 0.38333333333333336
+  },
+  "candidate_metrics": {
+    "tp": 57,
+    "fp": 2,
+    "tn": 38,
+    "fn": 3,
+    "precision": 0.9661016949152542,
+    "recall": 0.95,
+    "f1": 0.957983193277311,
+    "false_positive_rate": 0.05,
+    "false_negative_rate": 0.05
+  },
+  "candidate_by_scenario": {
+    "benign_burst": {
+      "tp": 0,
+      "fp": 2,
+      "tn": 18,
+      "fn": 0,
+      "precision": 0.0,
+      "recall": null,
+      "f1": 0.0,
+      "false_positive_rate": 0.1,
+      "false_negative_rate": null
+    },
+    "bounded_memory_growth": {
+      "tp": 17,
+      "fp": 0,
+      "tn": 0,
+      "fn": 3,
+      "precision": 1.0,
+      "recall": 0.85,
+      "f1": 0.918918918918919,
+      "false_positive_rate": null,
+      "false_negative_rate": 0.15
+    },
+    "idle": {
+      "tp": 0,
+      "fp": 0,
+      "tn": 20,
+      "fn": 0,
+      "precision": null,
+      "recall": null,
+      "f1": null,
+      "false_positive_rate": 0.0,
+      "false_negative_rate": null
+    },
+    "io_stress": {
+      "tp": 20,
+      "fp": 0,
+      "tn": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "false_positive_rate": null,
+      "false_negative_rate": 0.0
+    },
+    "sustained_cpu": {
+      "tp": 20,
+      "fp": 0,
+      "tn": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "false_positive_rate": null,
+      "false_negative_rate": 0.0
+    }
+  },
+  "model_fit_trials": [
+    {
+      "seed": 42,
+      "metrics": {
+        "tp": 57,
+        "fp": 2,
+        "tn": 38,
+        "fn": 3,
+        "precision": 0.9661016949152542,
+        "recall": 0.95,
+        "f1": 0.957983193277311,
+        "false_positive_rate": 0.05,
+        "false_negative_rate": 0.05
+      },
+      "agreement_with_rule": 0.78
+    },
+    {
+      "seed": 43,
+      "metrics": {
+        "tp": 57,
+        "fp": 0,
+        "tn": 40,
+        "fn": 3,
+        "precision": 1.0,
+        "recall": 0.95,
+        "f1": 0.9743589743589743,
+        "false_positive_rate": 0.0,
+        "false_negative_rate": 0.05
+      },
+      "agreement_with_rule": 0.8
+    },
+    {
+      "seed": 44,
+      "metrics": {
+        "tp": 57,
+        "fp": 1,
+        "tn": 39,
+        "fn": 3,
+        "precision": 0.9827586206896551,
+        "recall": 0.95,
+        "f1": 0.9661016949152542,
+        "false_positive_rate": 0.025,
+        "false_negative_rate": 0.05
+      },
+      "agreement_with_rule": 0.79
+    }
+  ],
+  "summary": {
+    "precision": {
+      "mean": 0.9829534385349697,
+      "sample_std": 0.01694999225366387
+    },
+    "recall": {
+      "mean": 0.95,
+      "sample_std": 0.0
+    },
+    "f1": {
+      "mean": 0.9661479541838465,
+      "sample_std": 0.00818798854717012
+    },
+    "false_positive_rate": {
+      "mean": 0.025,
+      "sample_std": 0.025
+    },
+    "false_negative_rate": {
+      "mean": 0.05,
+      "sample_std": 0.0
+    }
+  },
+  "agreement": {
+    "both_anomalous": 37,
+    "rule_only": 0,
+    "ml_only": 22,
+    "both_normal": 41
+  },
+  "limitations": [
+    "Repeated fits use the same held-out runs; they are not independent workload trials.",
+    "Supplied labels and workload representativeness require human verification.",
+    "No guarantee for unobserved workloads or cross-host generalization."
+  ]
+}

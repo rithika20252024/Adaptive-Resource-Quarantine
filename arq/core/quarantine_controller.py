@@ -38,6 +38,7 @@ class DutyCycleThrottler:
         self.period_s: float = period_s
         self._stop_event: threading.Event = threading.Event()
         self._thread: Optional[threading.Thread] = None
+        self.last_error = None
         self._lock: threading.Lock = threading.Lock()
 
     def start(self) -> None:
@@ -86,7 +87,8 @@ class DutyCycleThrottler:
                 # Active execution slice: resume process
                 try:
                     os.kill(self.pid, signal.SIGCONT)
-                except (ProcessLookupError, PermissionError, OSError):
+                except (ProcessLookupError, PermissionError, OSError) as exc:
+                    self.last_error = str(exc)
                     break
 
                 if self._stop_event.wait(run_time):
@@ -96,7 +98,8 @@ class DutyCycleThrottler:
                 if stop_time > 0.001:
                     try:
                         os.kill(self.pid, signal.SIGSTOP)
-                    except (ProcessLookupError, PermissionError, OSError):
+                    except (ProcessLookupError, PermissionError, OSError) as exc:
+                        self.last_error = str(exc)
                         break
 
                     if self._stop_event.wait(stop_time):

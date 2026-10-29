@@ -1,10 +1,10 @@
 # Adaptive Resource Quarantine (ARQ)
 
-**An adaptive process-monitoring and resource-quarantine system with rule-based anomaly detection and shadow-mode machine learning.**
+**Adaptive process monitoring with guarded resource control, labelled evaluation and optional validated ML assistance.**
 
 ARQ monitors running processes, evaluates resource-usage behavior, and applies graduated responses to anomalous processes. It combines an EWMA-based rule engine with an Isolation Forest machine-learning pipeline that can be evaluated alongside the existing detector.
 
-The rule-based engine remains responsible for quarantine decisions. The ML detector currently operates in **shadow mode**, allowing its outputs to be compared with rule-based decisions without changing process enforcement.
+By default, rule scoring supplies decisions and ML operates in **shadow mode**. An opt-in assisted mode can corroborate soft restrictions only after a model-matched evaluation report meets acceptance criteria. The dashboard defaults to dry-run; live actuation is limited to its registered child workloads.
 
 ## Key Features
 
@@ -164,7 +164,7 @@ Isolation Forest identifies observations that differ from learned telemetry patt
 ### Current ML Status
 
 - ML inference is integrated into the dashboard backend.
-- The rule-based detector remains the enforcement authority.
+- The rule path remains the baseline; validated opt-in ML can corroborate soft restrictions.
 - Training and evaluation utilities are available in the repository.
 - Active and candidate model artifacts are kept separate.
 - Candidate models require evaluation against normal and anomalous workloads before being considered for deployment.
@@ -360,25 +360,22 @@ The following metrics can be calculated when reliable labels are available:
 
 Precision, recall, and F1-score are not reported here because the supplied evaluation outputs do not provide a labelled confusion matrix. Unlabelled normal telemetry can estimate a flag rate, but cannot establish the full detection accuracy.
 
-## Current Limitations
+## Implemented Validation and Guarded ML Assistance
 
-- **Shadow-mode ML:** ML detections do not currently control quarantine enforcement.
-- **Generalization:** Models trained on limited telemetry may not recognize every type of anomalous process behavior.
-- **False positives and false negatives:** Model thresholds require validation against representative normal and anomalous workloads.
-- **Platform differences:** Process telemetry and enforcement capabilities vary across operating systems.
-- **Permissions:** Some process-control operations may require additional privileges or may be restricted by the operating system.
-- **Benchmark scope:** The reported benchmark is a single short run and should not be treated as a general performance guarantee.
-- **Synthetic evaluation:** Synthetic scenarios do not replace testing on a representative labelled dataset.
-- **Safety:** Process termination and signal-based throttling can affect workload availability. Test with controlled processes before using the system on important workloads.
+The project now includes run-disjoint labelled evaluation, confusion matrices and detector agreement, repeated model fits, randomized-order repeated live benchmarks, and an optional support-aware Isolation Forest candidate. The dashboard defaults to dry-run and shadow mode. Opt-in ML assistance requires a model-matched, recent evaluation report and conservative acceptance criteria; it can corroborate a soft restriction but cannot independently restore or terminate a process.
 
-## Future Work
+The macOS native-buffer crash is fixed. Platform capabilities, unavailable telemetry, denied actuation and dry-run status are reported explicitly. Dashboard control is limited to owned child workloads, priority changes are disabled in the guarded path, and automatic termination is separately opt-in. Linux parser tests and a Linux/macOS CI configuration are included.
 
-- Improve ML evaluation with broader, labelled workload datasets.
-- Validate candidate models across different normal and anomalous process scenarios.
-- Measure false-positive rates and detection performance over repeated trials.
-- Improve agreement analysis between rule-based and ML detectors.
-- Consider ML-assisted enforcement only after sufficient validation and safety testing.
-- Improve portability and document platform-specific behavior.
+See [validation and guarded ML guide](docs/VALIDATION_AND_GUARDED_ML.md) for commands, dataset format, acceptance criteria and current evidence. Current results are in [output/validation](output/validation). Earlier performance/ML tables above are historical; the new evidence must be evaluated separately.
+
+## Remaining Limitations and Future Work
+
+- Broad generalization still requires representative, independently labelled workloads and untouched evaluation sessions. Controlled scenarios cannot establish it.
+- Model comparison on reused held-out runs is exploratory. The supplied small dataset is blocked from assisted enforcement.
+- Repeated local benchmark trials do not establish cross-host performance or application-state preservation.
+- Local macOS tests and Linux parser fixtures pass; remote Linux/macOS CI runs and other operating systems still need verification.
+- The watchdog is in-process, and operating-system signal delivery is not guaranteed. Independent supervision is needed for controller crash recovery.
+- The earlier bracketed recovery probe remains an opt-in research path, separate from default dashboard restoration.
 
 ## License
 

@@ -1,0 +1,5 @@
+{
+  "train": 40,
+  "calibration": 40,
+  "test": 100
+}

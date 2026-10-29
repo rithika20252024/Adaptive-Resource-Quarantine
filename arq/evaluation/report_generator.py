@@ -22,8 +22,8 @@ class ReportGenerator:
 
         lines = [sep, header_row, sep]
         for r in results:
-            p_status = "Preserved" if r.target_process_completed else "Killed (Lost)"
-            loss_str = f"{r.state_loss_rate_pct:.0f}%"
+            p_status = "Alive at end" if r.target_process_completed else "Exited"
+            loss_str = "Not measured" if r.state_loss_rate_pct is None else f"{r.state_loss_rate_pct:.0f}%"
             row = [
                 r.strategy_name.ljust(col_w[0]),
                 f"{r.p95_latency_ms:.2f} ms".ljust(col_w[1]),
@@ -46,14 +46,14 @@ class ReportGenerator:
             "| :--- | :---: | :---: | :---: | :---: | :---: | :---: |",
         ]
         for r in results:
-            p_status = "Preserved" if r.target_process_completed else "Terminated"
+            p_status = "Alive at end" if r.target_process_completed else "Exited"
+            loss_str = "Not measured" if r.state_loss_rate_pct is None else f"{r.state_loss_rate_pct:.0f}%"
             lines.append(
                 f"| **{r.strategy_name}** | {r.median_latency_ms:.2f} | {r.p95_latency_ms:.2f} | "
-                f"{r.p99_latency_ms:.2f} | {r.throughput_rps:.1f} | {r.state_loss_rate_pct:.0f}% | {p_status} |"
+                f"{r.p99_latency_ms:.2f} | {r.throughput_rps:.1f} | {loss_str} | {p_status} |"
             )
         lines.append("")
         lines.append(
-            "> **Key Takeaway:** Adaptive Resource Quarantine reduces tail latency degradation for "
-            "co-located benign applications by up to **70%** without catastrophic state loss."
+            "> Local trial results only. Application state loss and recovery time were not measured."
         )
         return "\n".join(lines)

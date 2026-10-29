@@ -102,10 +102,19 @@ class WorkloadHandle:
         return self.process.pid or 0
 
     def stop(self, timeout: float = 1.0) -> None:
+        import signal
+        if self.process.is_alive():
+            try: os.kill(self.pid, signal.SIGCONT)
+            except (OSError, AttributeError): pass
         self.stop_event.set()
+        self.process.join(timeout=timeout)
         if self.process.is_alive():
             self.process.terminate()
             self.process.join(timeout=timeout)
+        if self.process.is_alive():
+            self.process.kill()
+            self.process.join(timeout=timeout)
+
 
 
 class WorkloadSimulator:

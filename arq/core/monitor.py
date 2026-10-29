@@ -15,7 +15,7 @@ from arq.core.process_model import ProcessMetrics
 # ============================================================================
 
 PROC_PIDTASKINFO = 4
-RUSAGE_INFO_V4 = 4
+RUSAGE_INFO_V2 = 2
 
 
 class MachTimebaseInfo(ctypes.Structure):
@@ -52,8 +52,8 @@ class ProcPidTaskInfo(ctypes.Structure):
     ]
 
 
-class RUsageInfoV4(ctypes.Structure):
-    """macOS rusage_info_v4 struct providing disk I/O metrics."""
+class RUsageInfoV2(ctypes.Structure):
+    """macOS rusage_info_v2 struct providing disk I/O metrics."""
 
     _fields_ = [
         ("ri_uuid", ctypes.c_uint8 * 16),
@@ -103,6 +103,7 @@ class ProcessMonitor:
         self._last_cpu_ns: Dict[int, float] = {}       # macOS CPU time in nanoseconds
         self._last_cpu_ticks: Dict[int, int] = {}      # Linux CPU time in clock ticks
         self._last_rss: Dict[int, float] = {}          # RSS in MB
+        self._last_identity: Dict[int, str] = {}
         self._last_io: Dict[int, Tuple[int, int]] = {} # (read_bytes, write_bytes)
 
         # Platform subsystem initialization
@@ -131,12 +132,18 @@ class ProcessMonitor:
             libproc_path = ctypes.util.find_library("proc")
             self._libproc = ctypes.CDLL(libproc_path or "/usr/lib/libproc.dylib")
 
+            if not hasattr(self._libproc, 'proc_pid_rusage'):
+                raise OSError('Complete process accounting unavailable')
+
             # Setup mach_timebase_info
             self._libc.mach_timebase_info.argtypes = [ctypes.POINTER(MachTimebaseInfo)]
             self._libc.mach_timebase_info.restype = ctypes.c_int
             tb = MachTimebaseInfo()
             if self._libc.mach_timebase_info(ctypes.byref(tb)) == 0 and tb.denom != 0:
                 self._timebase_factor = float(tb.numer) / float(tb.denom)
+
+            if tb.denom == 0:
+                raise RuntimeError('Invalid Mach timebase')
 
             # Setup libproc bindings
             self._libproc.proc_pidinfo.argtypes = [
@@ -174,6 +181,7 @@ class ProcessMonitor:
         self._last_cpu_ticks.pop(pid, None)
         self._last_rss.pop(pid, None)
         self._last_io.pop(pid, None)
+        self._last_identity.pop(pid, None)
 
     def sample_process(self, pid: int) -> Optional[ProcessMetrics]:
         """Sample resource metrics for a single process.
@@ -227,18 +235,18 @@ class ProcessMonitor:
             ctypes.c_int(ctypes.sizeof(task_info)),
         )
 
-        if ret <= 0:
+        if ret != ctypes.sizeof(task_info):
             self._clear_pid_state(pid)
             return None
 
-        now = time.time()
+        now = time.monotonic()
 
         # Resolve process name
         name_buf = ctypes.create_string_buffer(256)
         name_ret = self._libproc.proc_name(ctypes.c_int(pid), name_buf, ctypes.c_uint32(256))
         name = name_buf.value.decode("utf-8", errors="ignore") if name_ret > 0 else f"proc_{pid}"
 
-        # CPU calculation: convert Mach absolute time ticks to nanoseconds
+        # proc_taskinfo totals use Mach absolute-time units; convert to nanoseconds.
         raw_ticks = task_info.pti_total_user + task_info.pti_total_system
         current_cpu_ns = float(raw_ticks) * self._timebase_factor
 
@@ -251,13 +259,20 @@ class ProcessMonitor:
         read_bytes = 0
         write_bytes = 0
         if hasattr(self._libproc, "proc_pid_rusage"):
-            rinfo = RUsageInfoV4()
+            rinfo = RUsageInfoV2()
             ru_ret = self._libproc.proc_pid_rusage(
                 ctypes.c_int(pid),
-                ctypes.c_int(RUSAGE_INFO_V4),
+                ctypes.c_int(RUSAGE_INFO_V2),
                 ctypes.byref(rinfo),
             )
+            if ru_ret != 0:
+                self._clear_pid_state(pid)
+                return None
             if ru_ret == 0:
+                identity = str(rinfo.ri_proc_start_abstime)
+                if self._last_identity.get(pid, identity) != identity:
+                    self._clear_pid_state(pid)
+                self._last_identity[pid] = identity
                 read_bytes = int(rinfo.ri_diskio_bytesread)
                 write_bytes = int(rinfo.ri_diskio_byteswritten)
 
@@ -298,7 +313,7 @@ class ProcessMonitor:
             io_read_kb_s=io_read_kb_s,
             io_write_kb_s=io_write_kb_s,
             num_threads=num_threads,
-            timestamp=now,
+            timestamp=time.time(),
         )
 
     # ------------------------------------------------------------------------
@@ -318,7 +333,7 @@ class ProcessMonitor:
             self._clear_pid_state(pid)
             return None
 
-        now = time.time()
+        now = time.monotonic()
 
         # Parse /proc/<pid>/stat
         # format: pid (comm) state ppid pgrp ...
@@ -339,6 +354,10 @@ class ProcessMonitor:
             utime = int(rest[11])
             stime = int(rest[12])
             current_ticks = utime + stime
+            identity = rest[19]  # field 22: process start ticks
+            if self._last_identity.get(pid, identity) != identity:
+                self._clear_pid_state(pid)
+            self._last_identity[pid] = identity
         except (IndexError, ValueError):
             self._clear_pid_state(pid)
             return None
@@ -357,7 +376,8 @@ class ProcessMonitor:
                     elif line.startswith("Threads:"):
                         num_threads = int(line.split()[1])
         except (FileNotFoundError, IOError):
-            pass
+            self._clear_pid_state(pid)
+            return None
 
         # Parse /proc/<pid>/io for disk reads and writes
         read_bytes = 0
@@ -370,7 +390,8 @@ class ProcessMonitor:
                     elif line.startswith("write_bytes:"):
                         write_bytes = int(line.split()[1])
         except (FileNotFoundError, IOError, PermissionError):
-            pass
+            self._clear_pid_state(pid)
+            return None
 
         # Delta calculations
         cpu_percent = 0.0
@@ -411,49 +432,21 @@ class ProcessMonitor:
             io_read_kb_s=io_read_kb_s,
             io_write_kb_s=io_write_kb_s,
             num_threads=num_threads,
-            timestamp=now,
+            timestamp=time.time(),
         )
 
     # ------------------------------------------------------------------------
     # Fallback Implementation
     # ------------------------------------------------------------------------
 
+    def capabilities(self) -> dict:
+        """Report backend support; unavailable telemetry is never a healthy zero."""
+        native = self._is_linux or (self._is_macos and self._libproc is not None)
+        return {"platform": sys.platform, "native_telemetry": native,
+                "backend": "procfs" if self._is_linux else "libproc-v2" if native else "unsupported",
+                "signal_control": hasattr(__import__('signal'), 'SIGSTOP'),
+                "priority_control": hasattr(os, 'setpriority')}
+
     def _sample_fallback(self, pid: int) -> Optional[ProcessMetrics]:
-        """Fallback process inspection when specialized kernel interfaces are unavailable."""
-        try:
-            # Check if process is alive
-            os.kill(pid, 0)
-        except (ProcessLookupError, PermissionError, OSError):
-            self._clear_pid_state(pid)
-            return None
-
-        # Resolve process name via ps command fallback
-        name = f"proc_{pid}"
-        try:
-            res = subprocess.run(
-                ["ps", "-p", str(pid), "-o", "comm="],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                timeout=1,
-            )
-            if res.returncode == 0 and res.stdout.strip():
-                name = os.path.basename(res.stdout.strip())
-        except Exception:
-            pass
-
-        now = time.time()
-        self._last_sample_time[pid] = now
-
-        return ProcessMetrics(
-            pid=pid,
-            name=name,
-            cpu_percent=0.0,
-            memory_rss_mb=0.0,
-            memory_vms_mb=0.0,
-            memory_growth_mb_s=0.0,
-            io_read_kb_s=0.0,
-            io_write_kb_s=0.0,
-            num_threads=1,
-            timestamp=now,
-        )
+        self._clear_pid_state(pid)
+        return None

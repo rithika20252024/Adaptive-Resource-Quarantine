@@ -291,9 +291,9 @@
       <div class="sub">Throttled, not killed</div>
     </div>
     <div class="stat-card">
-      <div class="label">Isolation Gain</div>
-      <div class="val">68.4%</div>
-      <div class="sub">Average P99 Tail Latency Saved</div>
+      <div class="label">Enforcement</div>
+      <div class="val" id="executionMode">Dry run</div>
+      <div class="sub" id="capabilityText">Waiting for platform status</div>
     </div>
   </div>
 
@@ -311,7 +311,7 @@
           <th>CPU Usage</th>
           <th>Memory RSS</th>
           <th>Rule-Based Score</th>
-          <th>ML Score (Shadow)</th>
+          <th>ML Score</th>
           <th>ML Status</th>
           <th>Quarantine Stage</th>
           <th>Duty Quota</th>
@@ -337,6 +337,8 @@
       try {
         const res = await fetch('/api/status');
         const data = await res.json();
+        document.getElementById("executionMode").textContent = data.enforcement_enabled ? "Managed only" : "Dry run";
+        document.getElementById("capabilityText").textContent = data.capabilities?.backend || "Telemetry unavailable";
         renderTable(data.processes || []);
       } catch (e) {
         console.error("Telemetry fetch error:", e);
@@ -376,8 +378,8 @@
 
         const dutyCycle = typeof p.duty_cycle === 'number' ? p.duty_cycle : 1.0;
         const dutyStr = dutyCycle < 1.0 ? Math.round(dutyCycle * 100) + '%' : '100% (Uncapped)';
-        const cpuStr = (typeof p.cpu_pct === 'number' ? p.cpu_pct : 0.0).toFixed(1) + '%';
-        const memStr = (typeof p.mem_mb === 'number' ? p.mem_mb : 0.0).toFixed(1) + ' MB';
+        const cpuStr = p.telemetry_status === 'ok' ? (p.cpu_pct || 0).toFixed(1) + '%' : 'Unavailable';
+        const memStr = p.telemetry_status === 'ok' ? (p.mem_mb || 0).toFixed(1) + ' MB' : 'Unavailable';
 
         const stageBadge = `<span class="badge badge-${p.stage}">${p.stage}</span>`;
 

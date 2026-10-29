@@ -1,0 +1,202 @@
+{
+  "platform": "macOS-26.5.2-arm64-arm-64bit",
+  "python": "3.12.14",
+  "seed": 42,
+  "duration_per_trial_s": 1.0,
+  "trials": [
+    {
+      "trial": 0,
+      "order": 0,
+      "strategy": "static_termination",
+      "duration_s": 1.04,
+      "requests": 41,
+      "mean_latency_ms": 0.273,
+      "median_latency_ms": 0.344,
+      "p95_latency_ms": 0.379,
+      "p99_latency_ms": 0.391,
+      "throughput_rps": 39.3,
+      "process_survived": false,
+      "peak_cpu_pct": 99.2,
+      "peak_mem_mb": 22.2,
+      "strategy_label": "Static termination"
+    },
+    {
+      "trial": 0,
+      "order": 1,
+      "strategy": "unprotected",
+      "duration_s": 1.05,
+      "requests": 41,
+      "mean_latency_ms": 0.087,
+      "median_latency_ms": 0.087,
+      "p95_latency_ms": 0.09,
+      "p99_latency_ms": 0.096,
+      "throughput_rps": 39.0,
+      "process_survived": true,
+      "peak_cpu_pct": 100.5,
+      "peak_mem_mb": 22.2,
+      "strategy_label": "Unprotected baseline"
+    },
+    {
+      "trial": 0,
+      "order": 2,
+      "strategy": "adaptive",
+      "duration_s": 1.08,
+      "requests": 42,
+      "mean_latency_ms": 0.096,
+      "median_latency_ms": 0.089,
+      "p95_latency_ms": 0.118,
+      "p99_latency_ms": 0.15,
+      "throughput_rps": 39.0,
+      "process_survived": true,
+      "peak_cpu_pct": 100.0,
+      "peak_mem_mb": 22.2,
+      "strategy_label": "Adaptive quarantine"
+    },
+    {
+      "trial": 1,
+      "order": 0,
+      "strategy": "adaptive",
+      "duration_s": 1.07,
+      "requests": 42,
+      "mean_latency_ms": 0.094,
+      "median_latency_ms": 0.09,
+      "p95_latency_ms": 0.109,
+      "p99_latency_ms": 0.121,
+      "throughput_rps": 39.3,
+      "process_survived": true,
+      "peak_cpu_pct": 99.8,
+      "peak_mem_mb": 22.1,
+      "strategy_label": "Adaptive quarantine"
+    },
+    {
+      "trial": 1,
+      "order": 1,
+      "strategy": "static_termination",
+      "duration_s": 1.05,
+      "requests": 41,
+      "mean_latency_ms": 0.273,
+      "median_latency_ms": 0.341,
+      "p95_latency_ms": 0.388,
+      "p99_latency_ms": 0.45,
+      "throughput_rps": 39.2,
+      "process_survived": false,
+      "peak_cpu_pct": 99.4,
+      "peak_mem_mb": 22.1,
+      "strategy_label": "Static termination"
+    },
+    {
+      "trial": 1,
+      "order": 2,
+      "strategy": "unprotected",
+      "duration_s": 1.05,
+      "requests": 41,
+      "mean_latency_ms": 0.097,
+      "median_latency_ms": 0.087,
+      "p95_latency_ms": 0.091,
+      "p99_latency_ms": 0.431,
+      "throughput_rps": 39.0,
+      "process_survived": true,
+      "peak_cpu_pct": 100.2,
+      "peak_mem_mb": 22.2,
+      "strategy_label": "Unprotected baseline"
+    },
+    {
+      "trial": 2,
+      "order": 0,
+      "strategy": "static_termination",
+      "duration_s": 1.04,
+      "requests": 41,
+      "mean_latency_ms": 0.281,
+      "median_latency_ms": 0.346,
+      "p95_latency_ms": 0.377,
+      "p99_latency_ms": 0.435,
+      "throughput_rps": 39.4,
+      "process_survived": false,
+      "peak_cpu_pct": 99.3,
+      "peak_mem_mb": 22.2,
+      "strategy_label": "Static termination"
+    },
+    {
+      "trial": 2,
+      "order": 1,
+      "strategy": "adaptive",
+      "duration_s": 1.08,
+      "requests": 42,
+      "mean_latency_ms": 0.096,
+      "median_latency_ms": 0.091,
+      "p95_latency_ms": 0.115,
+      "p99_latency_ms": 0.154,
+      "throughput_rps": 38.8,
+      "process_survived": true,
+      "peak_cpu_pct": 100.1,
+      "peak_mem_mb": 22.3,
+      "strategy_label": "Adaptive quarantine"
+    },
+    {
+      "trial": 2,
+      "order": 2,
+      "strategy": "unprotected",
+      "duration_s": 1.04,
+      "requests": 41,
+      "mean_latency_ms": 0.087,
+      "median_latency_ms": 0.086,
+      "p95_latency_ms": 0.092,
+      "p99_latency_ms": 0.095,
+      "throughput_rps": 39.3,
+      "process_survived": true,
+      "peak_cpu_pct": 100.3,
+      "peak_mem_mb": 22.1,
+      "strategy_label": "Unprotected baseline"
+    }
+  ],
+  "summary": {
+    "unprotected": {
+      "p95_latency_ms": {
+        "mean": 0.091,
+        "sample_std": 0.0010000000000000009
+      },
+      "p99_latency_ms": {
+        "mean": 0.20733333333333334,
+        "sample_std": 0.19370166063648844
+      },
+      "throughput_rps": {
+        "mean": 39.1,
+        "sample_std": 0.1732050807568861
+      }
+    },
+    "static_termination": {
+      "p95_latency_ms": {
+        "mean": 0.38133333333333336,
+        "sample_std": 0.00585946527708232
+      },
+      "p99_latency_ms": {
+        "mean": 0.42533333333333334,
+        "sample_std": 0.030664855018951796
+      },
+      "throughput_rps": {
+        "mean": 39.3,
+        "sample_std": 0.09999999999999787
+      }
+    },
+    "adaptive": {
+      "p95_latency_ms": {
+        "mean": 0.114,
+        "sample_std": 0.004582575694955838
+      },
+      "p99_latency_ms": {
+        "mean": 0.14166666666666666,
+        "sample_std": 0.018009256878986798
+      },
+      "throughput_rps": {
+        "mean": 39.03333333333333,
+        "sample_std": 0.25166114784235816
+      }
+    }
+  },
+  "limitations": [
+    "Local short-run measurements; no cross-host or production guarantee.",
+    "No measured application state-loss, completion or recovery-time claim.",
+    "Legacy policy benchmark; new bracketed probe is not exercised here.",
+    "Latency probe measures synthetic work-unit processing time, not end-to-end service latency."
+  ]
+}

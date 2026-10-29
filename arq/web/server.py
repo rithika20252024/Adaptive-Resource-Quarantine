@@ -18,8 +18,8 @@ from arq.core.anomaly_scorer import AnomalyScorer
 from arq.core.monitor import ProcessMonitor
 from arq.core.process_model import ProcessProfile, QuarantineStage
 from arq.core.ml_pipeline import extract_features
-from arq.core.ml_training import load_isolation_forest
-from arq.core.quarantine_controller import QuarantineController
+from arq.core.guarded_controller import GuardedController
+from arq.core.ml_policy import MLAssistedPolicy, validate_candidate
 from arq.core.restoration_engine import RestorationEngine
 
 
@@ -32,24 +32,30 @@ class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
 class ARQDashboardState:
     """State manager for telemetry monitoring, process profiles, and simulated workloads."""
 
-    def __init__(self) -> None:
+    def __init__(self, enforce=False, ml_mode='shadow', model_path=None, validation_path=None, allow_termination=False) -> None:
         self.monitor = ProcessMonitor()
         self.scorer = AnomalyScorer()
         # Shadow mode: ML scores are recorded but never control quarantine.
         self.ml_artifact = None
         self.ml_load_error = None
-        model_path = os.path.join(
+        model_path = model_path or os.path.join(
             os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
             "models", "arq", "isolation_forest.joblib",
         )
         if os.path.isfile(model_path):
             try:
+                from arq.core.ml_training import load_isolation_forest
                 self.ml_artifact = load_isolation_forest(model_path)
             except Exception as exc:
                 # Keep the dashboard operational if the optional model is invalid.
                 self.ml_load_error = str(exc)
-        self.controller = QuarantineController()
-        self.restoration = RestorationEngine(self.controller)
+        if ml_mode == 'assist':
+            if self.ml_artifact is None or not validation_path:
+                raise ValueError('ML assistance requires a model and validation report')
+            validate_candidate(model_path, validation_path)
+        self.ml_policy = MLAssistedPolicy(ml_mode, validated=ml_mode == 'assist')
+        self.controller = GuardedController(enforce=enforce, allow_termination=allow_termination)
+        self.restoration = RestorationEngine(self.controller, auto_terminate_persistent=allow_termination)
         self.profiles: Dict[int, ProcessProfile] = {}
         self.simulated_workloads: Dict[int, Any] = {}
         self.lock = threading.Lock()
@@ -65,6 +71,8 @@ class ARQDashboardState:
             PID of spawned workload, or None on error.
         """
         with self.lock:
+            if len(self.simulated_workloads) >= 8:
+                return None
             try:
                 from arq.simulation.workloads import WorkloadSimulator
             except ImportError:
@@ -73,12 +81,13 @@ class ARQDashboardState:
             if w_type == "cpu":
                 h = WorkloadSimulator.start_cpu_burner()
             elif w_type == "mem":
-                h = WorkloadSimulator.start_memory_leaker()
+                h = WorkloadSimulator.start_memory_leaker(max_mb=64)
             elif w_type == "burst":
                 h = WorkloadSimulator.start_transient_burst()
             else:
                 return None
 
+            self.controller.register(h)
             self.simulated_workloads[h.pid] = h
             self.profiles[h.pid] = ProcessProfile(pid=h.pid, name=h.name)
             return h.pid
@@ -90,8 +99,12 @@ class ARQDashboardState:
             pid: Process ID to terminate and release.
         """
         with self.lock:
+            if pid not in self.simulated_workloads:
+                return False
             if pid in self.simulated_workloads:
                 try:
+                    if pid in self.profiles:
+                        self.controller.apply_stage(self.profiles[pid], QuarantineStage.NORMAL)
                     self.simulated_workloads[pid].stop()
                 except Exception:
                     pass
@@ -108,6 +121,7 @@ class ARQDashboardState:
     def cycle(self) -> None:
         """Sample all profiles, evaluate anomaly scores, run restoration, and append history."""
         with self.lock:
+            self.controller.heartbeat()
             now = time.time()
             target_pids = list(self.profiles.keys())
             if not target_pids:
@@ -138,9 +152,13 @@ class ARQDashboardState:
                             raw_anomaly = -float(
                                 model.decision_function([features])[0]
                             )
+                            if not math.isfinite(raw_anomaly):
+                                raise ValueError('Non-finite model output')
                             threshold = float(
                                 self.ml_artifact["calibration_threshold"]
                             )
+                            if not math.isfinite(threshold):
+                                raise ValueError('Non-finite model threshold')
                             temperature = max(abs(threshold), 1e-6)
                             x = max(-60.0, min(
                                 60.0, (raw_anomaly - threshold) / temperature
@@ -150,9 +168,14 @@ class ARQDashboardState:
                         except Exception as exc:
                             self.ml_load_error = str(exc)
 
-                    stage, action = self.restoration.process_cycle(prof, score)
+                    identity = str(pid) + ':' + self.monitor._last_identity.get(pid, 'unknown')
+                    decision_score, ml_reason = self.ml_policy.decide(identity, score, ml_anomaly)
+                    stage, action = self.restoration.process_cycle(prof, decision_score)
+                    latest_action = next((x for x in reversed(self.controller.audit) if x.get('pid') == pid), {})
+                    action = latest_action.get('status', 'monitoring') + '; duty control only'
                     snapshot.append({
                         "pid": pid,
+                        "telemetry_status": "ok",
                         "name": m.name or prof.name,
                         "cpu_pct": m.cpu_percent,
                         "mem_rss_mb": m.memory_rss_mb,
@@ -160,11 +183,17 @@ class ARQDashboardState:
                         "score": score,
                         "ml_score": ml_score,
                         "ml_anomaly": ml_anomaly,
-                        "ml_mode": "shadow",
+                        "ml_mode": self.ml_policy.mode,
+                        "decision_score": decision_score,
+                        "ml_reason": ml_reason,
                         "stage": prof.stage.name,
                         "duty_cycle": prof.enforced_duty_cycle,
                         "action": action,
                     })
+
+                elif pid in self.profiles:
+                    self.controller.apply_stage(self.profiles[pid], QuarantineStage.WATCHLIST, reason='Telemetry unavailable; release restrictions without declaring recovery')
+                    snapshot.append({'pid':pid, 'telemetry_status':'unavailable'})
 
             if snapshot:
                 self.history.append({"time": round(now, 1), "processes": snapshot})
@@ -219,6 +248,7 @@ class DashboardRequestHandler(SimpleHTTPRequestHandler):
                         latest = latest_by_pid.get(pid, {})
                         procs.append({
                             "pid": pid,
+                            "telemetry_status": latest.get("telemetry_status", "unavailable"),
                             "name": prof.name,
                             "cpu_pct": m.cpu_percent if m else 0.0,
                             "mem_mb": m.memory_rss_mb if m else 0.0,
@@ -233,6 +263,10 @@ class DashboardRequestHandler(SimpleHTTPRequestHandler):
                     payload = {
                         "processes": procs,
                         "history": self.state.history[-20:],
+                        "capabilities": self.state.monitor.capabilities(),
+                        "enforcement_enabled": self.state.controller.enforce,
+                        "actuator_errors": {pid:t.last_error for pid,t in self.state.controller._throttlers.items() if getattr(t,"last_error",None)},
+                        "actuation_audit": list(self.state.controller.audit)[-20:],
                     }
 
             self.wfile.write(json.dumps(payload).encode("utf-8"))
@@ -242,12 +276,26 @@ class DashboardRequestHandler(SimpleHTTPRequestHandler):
     def do_POST(self) -> None:
         """Handle POST actions for simulating, stopping, quarantining, and releasing processes."""
         parsed = urlparse(self.path)
-        length = int(self.headers.get("Content-Length", 0))
+        origin = self.headers.get('Origin')
+        if origin and origin != 'http://' + self.headers.get('Host', ''):
+            self.send_error(403, 'Cross-origin control denied');return
+        if self.headers.get('Content-Type','').split(';')[0] != 'application/json':
+            self.send_error(415, 'JSON required');return
+        try:
+            length = int(self.headers.get("Content-Length", 0))
+        except ValueError:
+            self.send_error(400, 'Invalid content length');return
+        if length < 0 or length > 16384:
+            self.send_error(413, 'Invalid body size');return
         body = self.rfile.read(length).decode("utf-8") if length > 0 else "{}"
         try:
             data = json.loads(body)
-        except Exception:
-            data = {}
+        except (ValueError, UnicodeError):
+            self.send_error(400, 'Invalid JSON');return
+        if not isinstance(data, dict):
+            self.send_error(400, 'JSON object required');return
+        if parsed.path in {'/api/stop','/api/quarantine','/api/release'} and (type(data.get('pid')) is not int or data['pid']<=1):
+            self.send_error(400, 'Positive process ID required');return
 
         if self.state is None:
             self.send_response(503)
@@ -260,75 +308,83 @@ class DashboardRequestHandler(SimpleHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.end_headers()
-            self.wfile.write(json.dumps({"success": True, "pid": pid}).encode("utf-8"))
+            self.wfile.write(json.dumps({"success": pid is not None, "pid": pid}).encode("utf-8"))
 
         elif parsed.path == "/api/stop":
             pid = int(data.get("pid", 0))
-            self.state.stop_simulated(pid)
+            stopped = self.state.stop_simulated(pid)
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.end_headers()
-            self.wfile.write(json.dumps({"success": True}).encode("utf-8"))
+            self.wfile.write(json.dumps({"success": stopped}).encode("utf-8"))
 
         elif parsed.path == "/api/quarantine":
             pid = int(data.get("pid", 0))
+            outcome = 'denied_unknown_process'
             with self.state.lock:
                 if pid in self.state.profiles:
                     prof = self.state.profiles[pid]
-                    self.state.controller.apply_stage(
+                    outcome = self.state.controller.apply_stage(
                         prof, QuarantineStage.SOFT_QUARANTINE, reason="Manual admin trigger"
                     )
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.end_headers()
-            self.wfile.write(json.dumps({"success": True}).encode("utf-8"))
+            self.wfile.write(json.dumps({"success": outcome == "requested", "actuation": outcome}).encode("utf-8"))
 
         elif parsed.path == "/api/release":
             pid = int(data.get("pid", 0))
+            outcome = 'denied_unknown_process'
             with self.state.lock:
                 if pid in self.state.profiles:
                     prof = self.state.profiles[pid]
-                    self.state.controller.apply_stage(
+                    outcome = self.state.controller.apply_stage(
                         prof, QuarantineStage.NORMAL, reason="Manual admin release"
                     )
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.end_headers()
-            self.wfile.write(json.dumps({"success": True}).encode("utf-8"))
+            self.wfile.write(json.dumps({"success": outcome == "requested", "actuation": outcome}).encode("utf-8"))
 
         else:
             self.send_response(404)
             self.end_headers()
 
 
-def run_server(port: int = 8080) -> None:
+def run_server(port: int = 8080, enforce=False, ml_mode='shadow', model_path=None, validation_path=None, allow_termination=False) -> None:
     """Start the ARQ dashboard web server with background telemetry cycles.
 
     Args:
         port: TCP port to listen on.
     """
-    state = ARQDashboardState()
+    state = ARQDashboardState(enforce, ml_mode, model_path, validation_path, allow_termination)
     DashboardRequestHandler.state = state
 
+    stopping = threading.Event()
     def background_loop() -> None:
-        while True:
+        while not stopping.is_set():
             try:
                 state.cycle()
             except Exception:
                 pass
-            time.sleep(0.5)
+            stopping.wait(0.5)
 
     bg_thread = threading.Thread(target=background_loop, daemon=True)
     bg_thread.start()
 
-    server = ThreadingHTTPServer(("0.0.0.0", port), DashboardRequestHandler)
+    server = ThreadingHTTPServer(("127.0.0.1", port), DashboardRequestHandler)
     print(f"Adaptive Resource Quarantine Dashboard live on http://localhost:{port}")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         print("\nStopping dashboard server...")
+    finally:
+        stopping.set()
+        bg_thread.join(timeout=2)
         server.server_close()
-        state.controller.cleanup_all()
+        state.controller.close()
+        for handle in list(state.simulated_workloads.values()):
+            handle.stop()
 
 
 if __name__ == "__main__":
