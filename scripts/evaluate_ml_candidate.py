@@ -1,22 +1,20 @@
-import json
+from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 import numpy as np
 
 from arq.core.ml_training import load_isolation_forest
 from arq.core.ml_pipeline import FEATURE_NAMES
 
-DATA = "data/normal_live.jsonl"
-MODELS = {
-    "Original": "models/arq/isolation_forest.joblib",
-    "Candidate": "models/arq-live-test/isolation_forest.joblib",
-}
+from arq.evaluation.script_inputs import parse_inputs, normal_matrix
 
-with open(DATA, encoding="utf-8") as f:
-    rows = [json.loads(line) for line in f if line.strip()]
-
-X = np.asarray([
-    [float(row[key]) for key in FEATURE_NAMES]
-    for row in rows
-])
+args = parse_inputs("Exploratory seven-feature process-detector comparison")
+try:
+    X = normal_matrix(args.data)
+except ValueError as exc:
+    raise SystemExit(str(exc))
+MODELS = {"Reference": args.original, "Candidate": args.candidate}
 
 baseline = np.median(X, axis=0)
 
@@ -50,7 +48,7 @@ artifacts = {
 }
 
 print(f"Normal observations: {len(X)}")
-print("\nNormal telemetry flag rates:")
+print("\nExploratory normal-observation flag rates (may include fitted/calibration rows; not held-out FPR):")
 
 for name, artifact in artifacts.items():
     model = artifact["model"]

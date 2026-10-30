@@ -223,16 +223,27 @@ The dashboard provides a view of monitored processes, telemetry, anomaly scores,
 ### 3. Run the Test Suite
 
 ```bash
-python -m pytest tests/ -v
+python -m unittest discover -s tests -v
 ```
 
 For ML-specific tests:
 
 ```bash
-python -m pytest tests/test_ml_pipeline.py tests/test_ml_training.py -v
+python -m unittest tests.test_ml_pipeline tests.test_ml_training -v
 ```
 
 ### 4. Evaluate the Detectors
+
+Collect compatible controlled process telemetry and generate the two comparison artifacts first (or extract the complete project package):
+
+```bash
+python -m pip install -r requirements-evaluation.txt
+PYTHONPATH=. python scripts/collect_labelled.py
+python -m arq.cli evaluate-labelled --data output/validation/controlled-labels.jsonl --output-dir output/validation/controlled-evaluation --repeats 3 --detector isolation_forest
+python -m arq.cli evaluate-labelled --data output/validation/controlled-labels.jsonl --output-dir output/validation/support-candidate --repeats 3 --detector support_if
+```
+
+Then run:
 
 ```bash
 python scripts/compare_detectors.py
@@ -399,6 +410,20 @@ The dataset confounds labels with host/date. Its high test scores do not establi
 
 [Updated 37-page IDF-B](output/pdf/ARQ_IDF_B_Updated_Kaggle_25_Papers.pdf) retains the OptiGuard-style continuous 25-paper prior-art table and horizontal TRL table. It adds dataset cleaning, chronological partitions, three-seed metrics, the host/date confounding limitation and a seventh screenshot space for Kaggle training output. This standalone IDF-B supersedes earlier standalone versions for current training results; the combined 40-page review remains a historical record.
 
-[Training package](releases/ARQ_Kaggle_Training_With_Updated_Report.zip) includes the CC0 source dataset archive, both trained offline models, source, raw logs, split manifest, predictions, updated report and SHA-256 manifest. Model binaries and raw data are packaged in this ZIP; they are not automatically loaded by the dashboard. The full current regression suite passes **61 tests**.
+[Training package](releases/ARQ_Kaggle_Training_With_Updated_Report.zip) includes the CC0 source dataset archive, both trained offline models, source, raw logs, split manifest, predictions, updated report and SHA-256 manifest. Model binaries and raw data are packaged in this ZIP; they are not automatically loaded by the dashboard. The retained training/report snapshot passed **61 tests**; the subsequent evaluation-input fixes bring the current suite to **66 passing tests**.
 
 Rebuild the IDF-B with `python scripts/build_standalone_idf.py` after installing `reportlab`. Arial fonts are required; on non-macOS hosts set `REPORT_FONT_DIR` to a directory containing Arial.ttf, Arial Bold.ttf and Arial Italic.ttf. The builder reads retained JSON results and uses the bundled logo in `scripts/assets/`.
+
+## Troubleshooting missing models and evaluation inputs
+
+The tests use standard-library unittest; pytest is optional. If you prefer pytest, install it in the active environment with `python -m pip install pytest`. A virtual environment from another checkout does not share installed packages or generated data. Run commands from the repository whose source and virtual environment you intend to use.
+
+The comparison scripts now default to the controlled labelled dataset and evaluated process-model artifacts above. Paths are anchored to the repository, and missing files produce setup instructions. To reproduce older experiments, pass `--data data/normal_live.jsonl --original models/arq/isolation_forest.joblib --candidate models/arq-live-test/isolation_forest.joblib`. Those historical files were not committed and cannot be recreated exactly from a fresh clone. Labelled data is filtered to normal observations for the median baseline and exploratory normal flag rate. Such a flag rate is not held-out false-positive performance.
+
+To show process ML scores while retaining dry-run/shadow behavior, restart the dashboard after preparing the process model:
+
+```bash
+python -m arq.cli web --ml-mode shadow --ml-model output/validation/support-candidate/evaluated_model.joblib
+```
+
+`Model unavailable` means a compatible artifact was not loaded. The Kaggle host-level models cannot substitute for the seven-feature process model. `Dry run` means no live enforcement is being demonstrated. A high rule score with a Normal stage in a dry-run screenshot is not evidence of real quarantine. The isolated rule-feature script can legitimately print below-threshold scores for memory-only and thread-only scenarios; that describes the current weighted scorer, not a failed script.

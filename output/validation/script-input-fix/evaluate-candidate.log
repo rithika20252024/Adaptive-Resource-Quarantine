@@ -1,0 +1,37 @@
+Normal observations: 120
+
+Exploratory normal-observation flag rates (may include fitted/calibration rows; not held-out FPR):
+  Reference : 2/120 (1.7%)
+  Candidate : 2/120 (1.7%)
+
+Synthetic scenario results:
+
+Baseline:
+  Reference : score= 0.00231, threshold=0.01454, flagged=NO
+  Candidate : score= 0.50231, threshold=0.51454, flagged=NO
+
+High CPU:
+  Reference : score= 0.01164, threshold=0.01454, flagged=NO
+  Candidate : score= 19.94523, threshold=0.51454, flagged=YES
+
+Rapid memory growth:
+  Reference : score= 0.00231, threshold=0.01454, flagged=NO
+  Candidate : score= 10.00000, threshold=0.51454, flagged=YES
+
+Large memory footprint:
+  Reference : score= 0.00088, threshold=0.01454, flagged=NO
+  Candidate : score= 6611.31409, threshold=0.51454, flagged=YES
+
+High disk I/O:
+  Reference : score= 0.00231, threshold=0.01454, flagged=NO
+  Candidate : score= 78.12500, threshold=0.51454, flagged=YES
+
+High thread count:
+  Reference : score= 0.00231, threshold=0.01454, flagged=NO
+  Candidate : score= 99.00000, threshold=0.51454, flagged=YES
+
+Combined stress:
+  Reference : score= 0.01020, threshold=0.01454, flagged=NO
+  Candidate : score= 6611.31409, threshold=0.51454, flagged=YES
+
+Note: synthetic scenarios are exploratory tests, not proof of real-world detection accuracy.

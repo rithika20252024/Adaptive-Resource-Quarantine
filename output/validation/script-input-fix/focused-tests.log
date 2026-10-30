@@ -1,0 +1,21 @@
+test_explicit_paths_accepted_without_loading_artifacts (tests.test_script_inputs.ScriptInputTests.test_explicit_paths_accepted_without_loading_artifacts) ... ok
+test_invalid_or_empty_normal_data_rejected (tests.test_script_inputs.ScriptInputTests.test_invalid_or_empty_normal_data_rejected) ... ok
+test_labelled_attacks_excluded_from_normal_baseline (tests.test_script_inputs.ScriptInputTests.test_labelled_attacks_excluded_from_normal_baseline) ... ok
+test_missing_files_explain_reproduction (tests.test_script_inputs.ScriptInputTests.test_missing_files_explain_reproduction) ... ok
+test_mixed_labels_rejected (tests.test_script_inputs.ScriptInputTests.test_mixed_labels_rejected) ... ok
+test_detector_without_models (tests.test_ml_pipeline.TestMLPipeline.test_detector_without_models) ... ok
+test_feature_extraction (tests.test_ml_pipeline.TestMLPipeline.test_feature_extraction) ... ok
+test_hybrid_score (tests.test_ml_pipeline.TestMLPipeline.test_hybrid_score) ... ok
+test_invalid_weights_rejected (tests.test_ml_pipeline.TestMLPipeline.test_invalid_weights_rejected) ... ok
+test_non_finite_feature_rejected (tests.test_ml_pipeline.TestMLPipeline.test_non_finite_feature_rejected) ... ok
+test_rule_score_fallback (tests.test_ml_pipeline.TestMLPipeline.test_rule_score_fallback) ... ok
+test_score_is_clamped (tests.test_ml_pipeline.TestMLPipeline.test_score_is_clamped) ... ok
+test_contamination_validation (tests.test_ml_training.TestMLTraining.test_contamination_validation) ... ok
+test_invalid_record_rejected (tests.test_ml_training.TestMLTraining.test_invalid_record_rejected) ... ok
+test_too_few_records_rejected (tests.test_ml_training.TestMLTraining.test_too_few_records_rejected) ... ok
+test_training_and_model_reload (tests.test_ml_training.TestMLTraining.test_training_and_model_reload) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.356s
+
+OK

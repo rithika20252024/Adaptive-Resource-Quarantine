@@ -1,0 +1,39 @@
+Isolation Forest results use each model's own calibration threshold.
+Rule scores are raw composite scores, not probabilities.
+
+Baseline:
+  Reference IF score= 0.00231 threshold=0.01454 flagged=NO
+  Candidate IF score= 0.50231 threshold=0.51454 flagged=NO
+  Rule scorer  score=0.00245 (fifth cycle; threshold context: 0.50)
+
+High CPU:
+  Reference IF score= 0.01164 threshold=0.01454 flagged=NO
+  Candidate IF score= 19.94523 threshold=0.51454 flagged=YES
+  Rule scorer  score=0.78552 (fifth cycle; threshold context: 0.50)
+
+Rapid memory growth:
+  Reference IF score= 0.00231 threshold=0.01454 flagged=NO
+  Candidate IF score= 10.00000 threshold=0.51454 flagged=YES
+  Rule scorer  score=0.11050 (fifth cycle; threshold context: 0.50)
+
+Large memory footprint:
+  Reference IF score= 0.00088 threshold=0.01454 flagged=NO
+  Candidate IF score= 6611.31409 threshold=0.51454 flagged=YES
+  Rule scorer  score=0.15567 (fifth cycle; threshold context: 0.50)
+
+High disk I/O:
+  Reference IF score= 0.00231 threshold=0.01454 flagged=NO
+  Candidate IF score= 78.12500 threshold=0.51454 flagged=YES
+  Rule scorer  score=0.85000 (fifth cycle; threshold context: 0.50)
+
+High thread count:
+  Reference IF score= 0.00231 threshold=0.01454 flagged=NO
+  Candidate IF score= 99.00000 threshold=0.51454 flagged=YES
+  Rule scorer  score=0.00245 (fifth cycle; threshold context: 0.50)
+
+Combined stress:
+  Reference IF score= 0.01020 threshold=0.01454 flagged=NO
+  Candidate IF score= 6611.31409 threshold=0.51454 flagged=YES
+  Rule scorer  score=0.85000 (fifth cycle; threshold context: 0.50)
+
+Synthetic feature substitutions are exploratory, not labelled detection accuracy.

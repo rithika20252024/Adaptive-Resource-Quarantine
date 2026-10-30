@@ -1,0 +1,73 @@
+test_burst_suppression (test_anomaly_scorer.TestAnomalyScorer.test_burst_suppression) ... ok
+test_ewma_tracking (test_anomaly_scorer.TestAnomalyScorer.test_ewma_tracking) ... ok
+test_high_cpu_returns_high_score (test_anomaly_scorer.TestAnomalyScorer.test_high_cpu_returns_high_score) ... ok
+test_low_usage_returns_low_score (test_anomaly_scorer.TestAnomalyScorer.test_low_usage_returns_low_score) ... ok
+test_score_range (test_anomaly_scorer.TestAnomalyScorer.test_score_range) ... ok
+test_acceptance_binds_hash (test_evaluation_policy.EvaluationTests.test_acceptance_binds_hash) ... ok
+test_assistance_is_opt_in_and_corroborated (test_evaluation_policy.EvaluationTests.test_assistance_is_opt_in_and_corroborated) ... ok
+test_benchmark_report_does_not_invent_state_loss (test_evaluation_policy.EvaluationTests.test_benchmark_report_does_not_invent_state_loss) ... ok
+test_confusion (test_evaluation_policy.EvaluationTests.test_confusion) ... ok
+test_evaluate_and_tamper_gate (test_evaluation_policy.EvaluationTests.test_evaluate_and_tamper_gate) ... ok
+test_guard_denies_unmanaged_and_dry_run (test_evaluation_policy.EvaluationTests.test_guard_denies_unmanaged_and_dry_run) ... ok
+test_guard_lease_expires_and_releases (test_evaluation_policy.EvaluationTests.test_guard_lease_expires_and_releases) ... ok
+test_http_status_and_denied_control_are_truthful (test_evaluation_policy.EvaluationTests.test_http_status_and_denied_control_are_truthful) ... 127.0.0.1 - - [31/Oct/2026 00:48:34] "GET /api/status HTTP/1.1" 200 -
+127.0.0.1 - - [31/Oct/2026 00:48:34] "POST /api/quarantine HTTP/1.1" 200 -
+ok
+test_linux_parser_and_pid_reuse (test_evaluation_policy.EvaluationTests.test_linux_parser_and_pid_reuse) ... ok
+test_live_guard_only_actuates_its_registered_child (test_evaluation_policy.EvaluationTests.test_live_guard_only_actuates_its_registered_child) ... ok
+test_macos_buffer_matches_requested_flavor (test_evaluation_policy.EvaluationTests.test_macos_buffer_matches_requested_flavor) ... ok
+test_missing_telemetry_does_not_make_a_healthy_decision (test_evaluation_policy.EvaluationTests.test_missing_telemetry_does_not_make_a_healthy_decision) ... ok
+test_native_cpu_delta_against_child_process_clock (test_evaluation_policy.EvaluationTests.test_native_cpu_delta_against_child_process_clock) ... ok
+test_run_leakage_rejected (test_evaluation_policy.EvaluationTests.test_run_leakage_rejected) ... ok
+test_support_candidate_scores_outside_training_support (test_evaluation_policy.EvaluationTests.test_support_candidate_scores_outside_training_support) ... ok
+test_unsupported_telemetry_is_missing (test_evaluation_policy.EvaluationTests.test_unsupported_telemetry_is_missing) ... ok
+test_web_can_run_without_ml_and_defaults_dry_run (test_evaluation_policy.EvaluationTests.test_web_can_run_without_ml_and_defaults_dry_run) ... ok
+test_archive_rejects_bad_rows_and_contradictory_vectors (test_kaggle_cryptojacking.KaggleStudyTests.test_archive_rejects_bad_rows_and_contradictory_vectors) ... ok
+test_external_model_report_cannot_pass_live_gate (test_kaggle_cryptojacking.KaggleStudyTests.test_external_model_report_cannot_pass_live_gate) ... ok
+test_small_host_and_zero_purge_rejected (test_kaggle_cryptojacking.KaggleStudyTests.test_small_host_and_zero_purge_rejected) ... ok
+test_time_splits_have_gaps_and_no_vector_overlap (test_kaggle_cryptojacking.KaggleStudyTests.test_time_splits_have_gaps_and_no_vector_overlap) ... ok
+test_detector_without_models (test_ml_pipeline.TestMLPipeline.test_detector_without_models) ... ok
+test_feature_extraction (test_ml_pipeline.TestMLPipeline.test_feature_extraction) ... ok
+test_hybrid_score (test_ml_pipeline.TestMLPipeline.test_hybrid_score) ... ok
+test_invalid_weights_rejected (test_ml_pipeline.TestMLPipeline.test_invalid_weights_rejected) ... ok
+test_non_finite_feature_rejected (test_ml_pipeline.TestMLPipeline.test_non_finite_feature_rejected) ... ok
+test_rule_score_fallback (test_ml_pipeline.TestMLPipeline.test_rule_score_fallback) ... ok
+test_score_is_clamped (test_ml_pipeline.TestMLPipeline.test_score_is_clamped) ... ok
+test_contamination_validation (test_ml_training.TestMLTraining.test_contamination_validation) ... ok
+test_invalid_record_rejected (test_ml_training.TestMLTraining.test_invalid_record_rejected) ... ok
+test_too_few_records_rejected (test_ml_training.TestMLTraining.test_too_few_records_rejected) ... ok
+test_training_and_model_reload (test_ml_training.TestMLTraining.test_training_and_model_reload) ... ok
+test_cpu_delta_second_sample (test_monitor.TestProcessMonitor.test_cpu_delta_second_sample) ... ok
+test_sample_all (test_monitor.TestProcessMonitor.test_sample_all) ... ok
+test_sample_invalid_pid (test_monitor.TestProcessMonitor.test_sample_invalid_pid) ... ok
+test_sample_self (test_monitor.TestProcessMonitor.test_sample_self) ... ok
+test_apply_hard_quarantine (test_quarantine.TestQuarantineController.test_apply_hard_quarantine) ... ok
+test_apply_soft_quarantine (test_quarantine.TestQuarantineController.test_apply_soft_quarantine) ... ok
+test_apply_watchlist (test_quarantine.TestQuarantineController.test_apply_watchlist) ... ok
+test_initial_stage_is_normal (test_quarantine.TestQuarantineController.test_initial_stage_is_normal) ... ok
+test_release_to_normal (test_quarantine.TestQuarantineController.test_release_to_normal) ... ok
+test_absolute_slo_rejects (test_recovery_probe.TestRecoveryProbe.test_absolute_slo_rejects) ... ok
+test_adapter_updates_actual_throttler (test_recovery_probe.TestRecoveryProbe.test_adapter_updates_actual_throttler) ... ok
+test_budget_blocks_actuation (test_recovery_probe.TestRecoveryProbe.test_budget_blocks_actuation) ... ok
+test_commit_failure_restores (test_recovery_probe.TestRecoveryProbe.test_commit_failure_restores) ... ok
+test_drift_is_inconclusive (test_recovery_probe.TestRecoveryProbe.test_drift_is_inconclusive) ... ok
+test_invalid_observations_fail_closed (test_recovery_probe.TestRecoveryProbe.test_invalid_observations_fail_closed) ... ok
+test_invalid_policy (test_recovery_probe.TestRecoveryProbe.test_invalid_policy) ... ok
+test_load_drift_is_inconclusive (test_recovery_probe.TestRecoveryProbe.test_load_drift_is_inconclusive) ... ok
+test_protected_harm_rejects_even_below_absolute_slo (test_recovery_probe.TestRecoveryProbe.test_protected_harm_rejects_even_below_absolute_slo) ... ok
+test_recovered_demand_commits_after_two_complete_brackets (test_recovery_probe.TestRecoveryProbe.test_recovered_demand_commits_after_two_complete_brackets) ... ok
+test_sampler_exception_restores (test_recovery_probe.TestRecoveryProbe.test_sampler_exception_restores) ... ok
+test_throttled_cpu_is_not_recovery (test_recovery_probe.TestRecoveryProbe.test_throttled_cpu_is_not_recovery) ... ok
+test_escalation_on_high_score (test_restoration.TestRestorationEngine.test_escalation_on_high_score) ... ok
+test_recovery_requires_hysteresis (test_restoration.TestRestorationEngine.test_recovery_requires_hysteresis) ... ok
+test_stays_normal_on_low_score (test_restoration.TestRestorationEngine.test_stays_normal_on_low_score) ... ok
+test_explicit_paths_accepted_without_loading_artifacts (test_script_inputs.ScriptInputTests.test_explicit_paths_accepted_without_loading_artifacts) ... ok
+test_invalid_or_empty_normal_data_rejected (test_script_inputs.ScriptInputTests.test_invalid_or_empty_normal_data_rejected) ... ok
+test_labelled_attacks_excluded_from_normal_baseline (test_script_inputs.ScriptInputTests.test_labelled_attacks_excluded_from_normal_baseline) ... ok
+test_missing_files_explain_reproduction (test_script_inputs.ScriptInputTests.test_missing_files_explain_reproduction) ... ok
+test_mixed_labels_rejected (test_script_inputs.ScriptInputTests.test_mixed_labels_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 66 tests in 2.202s
+
+OK

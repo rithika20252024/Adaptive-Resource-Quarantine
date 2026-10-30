@@ -1,4 +1,7 @@
-import json
+from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 import numpy as np
 
 from arq.core.anomaly_scorer import AnomalyScorer
@@ -6,23 +9,22 @@ from arq.core.ml_training import load_isolation_forest
 from arq.core.ml_pipeline import FEATURE_NAMES
 from arq.core.process_model import ProcessMetrics, ProcessProfile
 
-DATA = "data/normal_live.jsonl"
+from arq.evaluation.script_inputs import parse_inputs, normal_matrix
 
-with open(DATA, encoding="utf-8") as f:
-    rows = [json.loads(line) for line in f if line.strip()]
+args = parse_inputs("Exploratory seven-feature process-detector comparison")
+try:
+    X = normal_matrix(args.data)
+except ValueError as exc:
+    raise SystemExit(str(exc))
 
-X = np.asarray([
-    [float(row[key]) for key in FEATURE_NAMES]
-    for row in rows
-])
 baseline = np.median(X, axis=0)
 
 models = {
-    "Original IF": load_isolation_forest(
-        "models/arq/isolation_forest.joblib"
+    "Reference IF": load_isolation_forest(
+        args.original
     ),
     "Candidate IF": load_isolation_forest(
-        "models/arq-live-test/isolation_forest.joblib"
+        args.candidate
     ),
 }
 
@@ -86,3 +88,5 @@ for scenario, changes in scenarios.items():
         f"(fifth cycle; threshold context: "
         f"{scorer.anomaly_cycle_threshold:.2f})\n"
     )
+
+print("Synthetic feature substitutions are exploratory, not labelled detection accuracy.")
