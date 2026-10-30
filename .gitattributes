@@ -1,0 +1,6 @@
+# Keep generated documents and archives out of textual diffs and whitespace checks.
+*.pdf binary
+*.zip binary
+*.png binary
+*.gz binary
+*.joblib binary

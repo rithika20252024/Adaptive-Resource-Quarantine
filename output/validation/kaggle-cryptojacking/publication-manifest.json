@@ -1,0 +1,10 @@
+{
+  "full_regression_tests": 61,
+  "passed": true,
+  "pdf_pages": 37,
+  "research_papers": 25,
+  "screenshot_spaces": 7,
+  "report_sha256": "465ff0be7cef5ef93ca32bd03ef8f6227976d7adb94a16e7703b3af2db075873",
+  "training_package_sha256": "eca862554a169b4e51a5bccb7f3ec84d8094350ba603278fced455cfdadd2d94",
+  "training_package_bytes": 15157067
+}

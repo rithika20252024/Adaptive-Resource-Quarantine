@@ -1,0 +1,438 @@
+{
+  "schema": "arq.external_host_telemetry.v1",
+  "source": "https://www.kaggle.com/datasets/keshanijayasinghe/cryptojacking-attack-timeseries-dataset",
+  "license": "CC0 (Kaggle data card)",
+  "archive_sha256": "fb6277bb1ea73fc431a6162576b8765e68a38a528d9a55ac97672a4867f3069c",
+  "audit": {
+    "source_rows": {
+      "final-normal-data-set.csv": 80851,
+      "final-anormal-data-set.csv": 14461
+    },
+    "rejected": {
+      "invalid_value_or_timestamp": 2,
+      "duplicate_feature_vector": 784
+    },
+    "file_sha256": {
+      "final-normal-data-set.csv": "b6714de0dd53a5b65c9552c05cf66bf936e8cd33ff9ac40c77b84e4306e636ec",
+      "final-anormal-data-set.csv": "dd1ca1b91bf55fbe1f0b9454fb7934178721c22fb1940f13adfa4b2f1c8dcc1f"
+    },
+    "contradictory_vectors_removed": 0,
+    "usable_rows": 94526,
+    "host_labels": {
+      "localhost.localdomain": {
+        "1": 14441
+      },
+      "vm1-graph-analytics": {
+        "0": 18403
+      },
+      "vm2-node": {
+        "0": 20996
+      },
+      "vm3-tomcat": {
+        "0": 13091
+      },
+      "vm4-web-server": {
+        "0": 27595
+      }
+    }
+  },
+  "purged_rows": 2005,
+  "boundary_purge_timestamps_each_side": 100,
+  "split_method": "60/20/20 chronological within each host, duplicate vectors removed before splitting",
+  "partitions": {
+    "train": {
+      "rows": 56170,
+      "labels": {
+        "1": 8521,
+        "0": 47649
+      },
+      "hosts": {
+        "localhost.localdomain": 8521,
+        "vm1-graph-analytics": 10941,
+        "vm2-node": 12497,
+        "vm3-tomcat": 7754,
+        "vm4-web-server": 16457
+      },
+      "first_timestamp": "2020-01-26T11:08:27",
+      "last_timestamp": "2020-03-20T09:17:50"
+    },
+    "calibration": {
+      "rows": 17922,
+      "labels": {
+        "1": 2705,
+        "0": 15217
+      },
+      "hosts": {
+        "localhost.localdomain": 2705,
+        "vm1-graph-analytics": 3481,
+        "vm2-node": 3999,
+        "vm3-tomcat": 2418,
+        "vm4-web-server": 5319
+      },
+      "first_timestamp": "2020-01-26T14:40:19",
+      "last_timestamp": "2020-03-20T10:07:49"
+    },
+    "test": {
+      "rows": 18429,
+      "labels": {
+        "1": 2810,
+        "0": 15619
+      },
+      "hosts": {
+        "localhost.localdomain": 2810,
+        "vm1-graph-analytics": 3581,
+        "vm2-node": 4100,
+        "vm3-tomcat": 2519,
+        "vm4-web-server": 5419
+      },
+      "first_timestamp": "2020-01-26T15:50:20",
+      "last_timestamp": "2020-03-20T11:00:03"
+    }
+  },
+  "feature_names": [
+    "cpu_user",
+    "cpu_system",
+    "cpu_idle",
+    "cpu_iowait",
+    "cpu_nice",
+    "cpu_softirq",
+    "load_min1",
+    "load_min5",
+    "load_min15",
+    "mem_percent",
+    "mem_active",
+    "mem_available",
+    "mem_free",
+    "mem_used",
+    "mem_cached",
+    "mem_buffers",
+    "mem_inactive",
+    "memswap_percent",
+    "processcount_running",
+    "processcount_sleeping",
+    "processcount_thread",
+    "processcount_total"
+  ],
+  "excluded_constant_features": [
+    "cpu_irq"
+  ],
+  "excluded_metadata": "timestamp, hostname, OS strings, source filename, labels, cumulative counters, static hardware identity",
+  "models": {
+    "isolation_forest": {
+      "trials": [
+        {
+          "seed": 42,
+          "threshold": 0.08693703589829269,
+          "metrics": {
+            "tp": 2810,
+            "fp": 747,
+            "tn": 14872,
+            "fn": 0,
+            "precision": 0.7899915659263425,
+            "recall": 1.0,
+            "f1": 0.8826762996701744,
+            "false_positive_rate": 0.047826365324284525,
+            "false_negative_rate": 0.0,
+            "accuracy": 0.9594660589288622,
+            "roc_auc": 0.9998711078007692,
+            "average_precision": 0.9987835316388025
+          },
+          "fit_and_score_s": 0.5666148330055876,
+          "model_sha256": "6d8fa854f6a236dba7367e818ab2769629abb4e69205a5c9e08f798193ece8ba",
+          "by_host": {
+            "localhost.localdomain": {
+              "tp": 2810,
+              "fp": 0,
+              "tn": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "false_positive_rate": null,
+              "false_negative_rate": 0.0
+            },
+            "vm1-graph-analytics": {
+              "tp": 0,
+              "fp": 684,
+              "tn": 2897,
+              "fn": 0,
+              "precision": 0.0,
+              "recall": null,
+              "f1": 0.0,
+              "false_positive_rate": 0.1910080982965652,
+              "false_negative_rate": null
+            },
+            "vm2-node": {
+              "tp": 0,
+              "fp": 4,
+              "tn": 4096,
+              "fn": 0,
+              "precision": 0.0,
+              "recall": null,
+              "f1": 0.0,
+              "false_positive_rate": 0.000975609756097561,
+              "false_negative_rate": null
+            },
+            "vm3-tomcat": {
+              "tp": 0,
+              "fp": 50,
+              "tn": 2469,
+              "fn": 0,
+              "precision": 0.0,
+              "recall": null,
+              "f1": 0.0,
+              "false_positive_rate": 0.019849146486701073,
+              "false_negative_rate": null
+            },
+            "vm4-web-server": {
+              "tp": 0,
+              "fp": 9,
+              "tn": 5410,
+              "fn": 0,
+              "precision": 0.0,
+              "recall": null,
+              "f1": 0.0,
+              "false_positive_rate": 0.0016608230300793503,
+              "false_negative_rate": null
+            }
+          }
+        },
+        {
+          "seed": 43,
+          "threshold": 0.09004571746537084,
+          "metrics": {
+            "tp": 2810,
+            "fp": 717,
+            "tn": 14902,
+            "fn": 0,
+            "precision": 0.7967110859087043,
+            "recall": 1.0,
+            "f1": 0.8868549786965441,
+            "false_positive_rate": 0.04590562776106025,
+            "false_negative_rate": 0.0,
+            "accuracy": 0.9610939280481849,
+            "roc_auc": 0.9998495308319391,
+            "average_precision": 0.9987302090201031
+          },
+          "fit_and_score_s": 0.5257244999957038
+        },
+        {
+          "seed": 44,
+          "threshold": 0.09073379980635157,
+          "metrics": {
+            "tp": 2810,
+            "fp": 789,
+            "tn": 14830,
+            "fn": 0,
+            "precision": 0.7807724367879967,
+            "recall": 1.0,
+            "f1": 0.8768918708066781,
+            "false_positive_rate": 0.050515397912798514,
+            "false_negative_rate": 0.0,
+            "accuracy": 0.9571870421618102,
+            "roc_auc": 0.9998505561366882,
+            "average_precision": 0.9986233103940186
+          },
+          "fit_and_score_s": 0.5305089169996791
+        }
+      ],
+      "summary": {
+        "accuracy": {
+          "mean": 0.9592490097129525,
+          "sample_std": 0.001962465822347967
+        },
+        "precision": {
+          "mean": 0.7891583628743478,
+          "sample_std": 0.008001925046052885
+        },
+        "recall": {
+          "mean": 1.0,
+          "sample_std": 0.0
+        },
+        "f1": {
+          "mean": 0.8821410497244654,
+          "sample_std": 0.005003073963531167
+        },
+        "false_positive_rate": {
+          "mean": 0.048082463666047764,
+          "sample_std": 0.002315531252964354
+        },
+        "roc_auc": {
+          "mean": 0.9998570649231322,
+          "sample_std": 1.217228909053512e-05
+        },
+        "average_precision": {
+          "mean": 0.9987123503509747,
+          "sample_std": 8.15898943944711e-05
+        }
+      }
+    },
+    "extra_trees": {
+      "trials": [
+        {
+          "seed": 42,
+          "threshold": 0.5,
+          "metrics": {
+            "tp": 2810,
+            "fp": 0,
+            "tn": 15619,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "false_positive_rate": 0.0,
+            "false_negative_rate": 0.0,
+            "accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 1.0
+          },
+          "fit_and_score_s": 0.6930649580026511,
+          "model_sha256": "fd3a101eceb99652b9b79519c3130e07d44f93bce04a60d505ddbf9157ad343c",
+          "by_host": {
+            "localhost.localdomain": {
+              "tp": 2810,
+              "fp": 0,
+              "tn": 0,
+              "fn": 0,
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "false_positive_rate": null,
+              "false_negative_rate": 0.0
+            },
+            "vm1-graph-analytics": {
+              "tp": 0,
+              "fp": 0,
+              "tn": 3581,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "f1": null,
+              "false_positive_rate": 0.0,
+              "false_negative_rate": null
+            },
+            "vm2-node": {
+              "tp": 0,
+              "fp": 0,
+              "tn": 4100,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "f1": null,
+              "false_positive_rate": 0.0,
+              "false_negative_rate": null
+            },
+            "vm3-tomcat": {
+              "tp": 0,
+              "fp": 0,
+              "tn": 2519,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "f1": null,
+              "false_positive_rate": 0.0,
+              "false_negative_rate": null
+            },
+            "vm4-web-server": {
+              "tp": 0,
+              "fp": 0,
+              "tn": 5419,
+              "fn": 0,
+              "precision": null,
+              "recall": null,
+              "f1": null,
+              "false_positive_rate": 0.0,
+              "false_negative_rate": null
+            }
+          }
+        },
+        {
+          "seed": 43,
+          "threshold": 0.5,
+          "metrics": {
+            "tp": 2810,
+            "fp": 0,
+            "tn": 15619,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "false_positive_rate": 0.0,
+            "false_negative_rate": 0.0,
+            "accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 1.0000000000000002
+          },
+          "fit_and_score_s": 0.7066483329981565
+        },
+        {
+          "seed": 44,
+          "threshold": 0.5,
+          "metrics": {
+            "tp": 2810,
+            "fp": 0,
+            "tn": 15619,
+            "fn": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "false_positive_rate": 0.0,
+            "false_negative_rate": 0.0,
+            "accuracy": 1.0,
+            "roc_auc": 1.0,
+            "average_precision": 1.0
+          },
+          "fit_and_score_s": 0.6686608340096427
+        }
+      ],
+      "summary": {
+        "accuracy": {
+          "mean": 1.0,
+          "sample_std": 0.0
+        },
+        "precision": {
+          "mean": 1.0,
+          "sample_std": 0.0
+        },
+        "recall": {
+          "mean": 1.0,
+          "sample_std": 0.0
+        },
+        "f1": {
+          "mean": 1.0,
+          "sample_std": 0.0
+        },
+        "false_positive_rate": {
+          "mean": 0.0,
+          "sample_std": 0.0
+        },
+        "roc_auc": {
+          "mean": 1.0,
+          "sample_std": 0.0
+        },
+        "average_precision": {
+          "mean": 1.0,
+          "sample_std": 1.5700924586837752e-16
+        }
+      }
+    }
+  },
+  "deployment_eligible": false,
+  "limitations": [
+    "Normal and attack records come from disjoint host identities and collection dates; class and domain are confounded.",
+    "Chronological partitions within a host do not establish unseen-host attack generalization.",
+    "The single attack host prevents a meaningful host-disjoint train/test attack study.",
+    "Labels are inferred from publisher file names, not independently verified per-observation ground truth.",
+    "These host-level features and units are incompatible with the seven-feature ARQ process model.",
+    "Neither model is eligible for ARQ enforcement; this study does not measure quarantine or recovery.",
+    "Repeated seeds share test observations; they are not independent collection experiments."
+  ],
+  "environment": {
+    "python": "3.12.14",
+    "platform": "macOS-26.5.2-arm64-arm-64bit",
+    "numpy": "2.3.5",
+    "sklearn": "1.9.1",
+    "joblib": "1.6.0"
+  },
+  "elapsed_s": 6.918682333998731
+}

@@ -358,7 +358,7 @@ The following metrics can be calculated when reliable labels are available:
 | F1-score | 2TP / (2TP + FP + FN) | Harmonic mean of precision and recall |
 | False Positive Rate | FP / (FP + TN) | Proportion of normal samples incorrectly flagged |
 
-Precision, recall, and F1-score are not reported here because the supplied evaluation outputs do not provide a labelled confusion matrix. Unlabelled normal telemetry can estimate a flag rate, but cannot establish the full detection accuracy.
+The historical outputs in this section did not contain a labelled confusion matrix. The later controlled evaluation and Kaggle study below provide confusion counts, precision, recall and F1. Unlabelled normal telemetry alone can estimate a flag rate but cannot establish full detection accuracy.
 
 ## Implemented Validation and Guarded ML Assistance
 
@@ -388,3 +388,17 @@ An opt-in bracketed release-probe prototype and synthetic comparison are documen
 ## Combined academic report and technical disclosure
 
 [Download Reviews I, II, III and IDF B](output/pdf/ARQ_Combined_Reviews_I_II_III_and_IDF_B.pdf). The 40-page report follows the supplied Arial layout and separates historical outputs, current module tests and synthetic recovery-policy results. See [report guide](docs/REPORT_GUIDE.md) for the page map, evidence limits and rebuild instructions. Patent claims are draft candidates; patentability is not established.
+
+## Kaggle dataset training study
+
+A separate offline study trains Isolation Forest and Extra Trees on Kaggle server-level cryptojacking telemetry. It uses 94,526 cleaned unique observations, chronological per-host splits and purged boundaries. Full data provenance, model settings and results are in [the training model card](docs/KAGGLE_TRAINING.md).
+
+The dataset confounds labels with host/date. Its high test scores do not establish unseen-host detection. These artifacts use a separate feature schema and cannot authorize ARQ live enforcement. The seven-feature process detector and dashboard behavior remain unchanged.
+
+## Updated IDF-B and downloadable training artifacts
+
+[Updated 37-page IDF-B](output/pdf/ARQ_IDF_B_Updated_Kaggle_25_Papers.pdf) retains the OptiGuard-style continuous 25-paper prior-art table and horizontal TRL table. It adds dataset cleaning, chronological partitions, three-seed metrics, the host/date confounding limitation and a seventh screenshot space for Kaggle training output. This standalone IDF-B supersedes earlier standalone versions for current training results; the combined 40-page review remains a historical record.
+
+[Training package](releases/ARQ_Kaggle_Training_With_Updated_Report.zip) includes the CC0 source dataset archive, both trained offline models, source, raw logs, split manifest, predictions, updated report and SHA-256 manifest. Model binaries and raw data are packaged in this ZIP; they are not automatically loaded by the dashboard. The full current regression suite passes **61 tests**.
+
+Rebuild the IDF-B with `python scripts/build_standalone_idf.py` after installing `reportlab`. Arial fonts are required; on non-macOS hosts set `REPORT_FONT_DIR` to a directory containing Arial.ttf, Arial Bold.ttf and Arial Italic.ttf. The builder reads retained JSON results and uses the bundled logo in `scripts/assets/`.

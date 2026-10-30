@@ -1,0 +1,20 @@
+test_archive_rejects_bad_rows_and_contradictory_vectors (tests.test_kaggle_cryptojacking.KaggleStudyTests.test_archive_rejects_bad_rows_and_contradictory_vectors) ... ok
+test_external_model_report_cannot_pass_live_gate (tests.test_kaggle_cryptojacking.KaggleStudyTests.test_external_model_report_cannot_pass_live_gate) ... ok
+test_small_host_and_zero_purge_rejected (tests.test_kaggle_cryptojacking.KaggleStudyTests.test_small_host_and_zero_purge_rejected) ... ok
+test_time_splits_have_gaps_and_no_vector_overlap (tests.test_kaggle_cryptojacking.KaggleStudyTests.test_time_splits_have_gaps_and_no_vector_overlap) ... ok
+test_detector_without_models (tests.test_ml_pipeline.TestMLPipeline.test_detector_without_models) ... ok
+test_feature_extraction (tests.test_ml_pipeline.TestMLPipeline.test_feature_extraction) ... ok
+test_hybrid_score (tests.test_ml_pipeline.TestMLPipeline.test_hybrid_score) ... ok
+test_invalid_weights_rejected (tests.test_ml_pipeline.TestMLPipeline.test_invalid_weights_rejected) ... ok
+test_non_finite_feature_rejected (tests.test_ml_pipeline.TestMLPipeline.test_non_finite_feature_rejected) ... ok
+test_rule_score_fallback (tests.test_ml_pipeline.TestMLPipeline.test_rule_score_fallback) ... ok
+test_score_is_clamped (tests.test_ml_pipeline.TestMLPipeline.test_score_is_clamped) ... ok
+test_contamination_validation (tests.test_ml_training.TestMLTraining.test_contamination_validation) ... ok
+test_invalid_record_rejected (tests.test_ml_training.TestMLTraining.test_invalid_record_rejected) ... ok
+test_too_few_records_rejected (tests.test_ml_training.TestMLTraining.test_too_few_records_rejected) ... ok
+test_training_and_model_reload (tests.test_ml_training.TestMLTraining.test_training_and_model_reload) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 0.259s
+
+OK

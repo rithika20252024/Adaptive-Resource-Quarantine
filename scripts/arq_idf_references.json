@@ -1,0 +1,152 @@
+[
+  [
+    "Ibidunmoye, Hernandez-Rodriguez and Elmroth (2015). Performance Anomaly Detection and Bottleneck Identification. ACM Computing Surveys.",
+    "https://www.diva-portal.org/smash/get/diva2%3A839537/FULLTEXT01.pdf",
+    "Surveys performance anomaly detection and bottleneck analysis.",
+    "Supports telemetry analysis; does not validate ARQ thresholds."
+  ],
+  [
+    "Liu, Ting and Zhou (2008). Isolation Forest. ICDM.",
+    "https://www.lamda.nju.edu.cn/publication/icdm08b.pdf",
+    "Uses isolation trees to score unusual observations.",
+    "Standard model baseline; ARQ evaluates it and a support-aware candidate separately from bracketed recovery."
+  ],
+  [
+    "Hochreiter and Schmidhuber (1997). Long Short-Term Memory. Neural Computation.",
+    "https://doi.org/10.1162/neco.1997.9.8.1735",
+    "Introduces recurrent modeling of temporal dependencies.",
+    "Background only; no trained LSTM is established here."
+  ],
+  [
+    "Malhotra et al. (2016). LSTM-based Encoder-Decoder for Multi-sensor Anomaly Detection.",
+    "https://arxiv.org/abs/1607.00148",
+    "Detects unusual sequences through reconstruction error.",
+    "Sequence reconstruction is prior work, not a new ARQ mechanism."
+  ],
+  [
+    "Lo et al. (2016). Improving Resource Efficiency at Scale with Heracles. ACM TOCS.",
+    "https://research.google/pubs/improving-resource-efficiency-at-scale-with-heracles/",
+    "Manages colocated resources with feedback to protect latency.",
+    "Latency-driven allocation and recovery are established."
+  ],
+  [
+    "Fried et al. (2020). Caladan: Mitigating Interference at Microsecond Timescales. OSDI.",
+    "https://www.usenix.org/conference/osdi20/presentation/fried",
+    "Uses fast allocation and contention signals for isolation.",
+    "ARQ does not reproduce its scheduler or timing scale."
+  ],
+  [
+    "Chen, Delimitrou and Martinez (2019). PARTIES: QoS-Aware Resource Partitioning for Multiple Interactive Services. ASPLOS.",
+    "https://www.csl.cornell.edu/~martinez/doc/asplos19.pdf",
+    "Dynamically partitions resources for colocated interactive services.",
+    "Multi-service QoS feedback is not novel to this project."
+  ],
+  [
+    "Ousterhout et al. (2019). Shenango: Achieving High CPU Efficiency for Latency-sensitive Datacenter Workloads. NSDI.",
+    "https://www.usenix.org/conference/nsdi19/presentation/ousterhout",
+    "Adjusts CPU allocations to changing service demands.",
+    "Provides a scheduling comparison, not an ARQ implementation."
+  ],
+  [
+    "Zhang et al. (2013). CPI2: CPU performance isolation for shared compute clusters. EuroSys.",
+    "https://research.google/pubs/cpi2-cpu-performance-isolation-for-shared-compute-clusters/",
+    "Uses CPI observations to identify interference and throttle likely offenders.",
+    "Interference-aware selective throttling already exists."
+  ],
+  [
+    "Delimitrou and Kozyrakis (2014). Quasar: Resource-Efficient and QoS-Aware Cluster Management. ASPLOS.",
+    "https://csl.stanford.edu/~christos/publications/2014.quasar.asplos.pdf",
+    "Combines classification with resource allocation and assignment.",
+    "Learned resource decisions are established research."
+  ],
+  [
+    "Delimitrou and Kozyrakis (2013). Paragon: QoS-aware scheduling for heterogeneous datacenters. ASPLOS.",
+    "https://mast.stanford.edu/pubs/paragon_qos_aware_scheduling_for_heterogeneous_datacenters/",
+    "Accounts for hardware heterogeneity and workload interference.",
+    "A broader placement problem than local CPU-quarantine release."
+  ],
+  [
+    "Mars et al. (2011). Bubble-Up: Increasing Utilization In Modern Warehouse Scale Computers Via Sensible Co-Locations. MICRO.",
+    "https://research.google/pubs/bubble-up-increasing-utilization-in-modern-warehouse-scale-computers-via-sensible-co-locations/",
+    "Applies tunable memory pressure to characterize interference sensitivity.",
+    "Active perturbation for interference assessment is known."
+  ],
+  [
+    "Banga, Druschel and Mogul (1999). Resource Containers: A New Facility for Resource Management in Server Systems. OSDI.",
+    "https://www.usenix.org/conference/osdi-99/presentation/resource-containers-new-facility-resource-management-server-systems",
+    "Separates resource accounting principals from protection domains.",
+    "Resource management and security isolation are distinct."
+  ],
+  [
+    "Hindman et al. (2011). Mesos: A Platform for Fine-Grained Resource Sharing in the Data Center. NSDI.",
+    "https://www.usenix.org/conference/nsdi11/mesos-platform-fine-grained-resource-sharing-data-center",
+    "Coordinates fine-grained sharing across cluster frameworks.",
+    "Cluster allocation differs from this local recovery experiment."
+  ],
+  [
+    "Verma et al. (2015). Large-scale cluster management at Google with Borg. EuroSys.",
+    "https://research.google/pubs/large-scale-cluster-management-at-google-with-borg/",
+    "Describes large-scale workload placement and cluster management.",
+    "Deployment scale and guarantees are not comparable to ARQ."
+  ],
+  [
+    "Schwarzkopf et al. (2013). Omega: flexible, scalable schedulers for large compute clusters. EuroSys.",
+    "https://research.google/pubs/omega-flexible-scalable-schedulers-for-large-compute-clusters/",
+    "Uses shared state and optimistic concurrency for scheduling.",
+    "Does not establish this prototype as a cluster scheduler."
+  ],
+  [
+    "Ghodsi et al. (2011). Dominant Resource Fairness: Fair Allocation of Multiple Resource Types. NSDI.",
+    "https://www.usenix.org/conference/nsdi11/dominant-resource-fairness-fair-allocation-multiple-resource-types",
+    "Defines multi-resource fair allocation.",
+    "ARQ does not implement DRF or prove allocation fairness."
+  ],
+  [
+    "Rzadca et al. (2020). Autopilot: Workload Autoscaling at Google Scale. EuroSys.",
+    "https://research.google/pubs/autopilot-workload-autoscaling-at-google-scale/",
+    "Automates resource sizing and scaling for workloads.",
+    "Autoscaling evidence cannot be transferred to ARQ."
+  ],
+  [
+    "Kulkarni et al. (2019). Pliant: Leveraging Approximation to Improve Datacenter Resource Efficiency. HPCA.",
+    "https://www.csl.cornell.edu/~nsk49/publication/pliant_hpca/",
+    "Uses approximation to reduce colocation contention.",
+    "ARQ changes CPU duty, not application approximation quality."
+  ],
+  [
+    "Belay et al. (2012). Dune: Safe User-level Access to Privileged CPU Features. OSDI.",
+    "https://www.usenix.org/conference/osdi12/technical-sessions/presentation/belay",
+    "Exposes privileged CPU facilities safely to a Linux process using virtualization hardware.",
+    "ARQ uses ordinary process controls; it does not implement Dune or hardware-backed isolation."
+  ],
+  [
+    "Kaffes et al. (2019). Shinjuku: Preemptive Scheduling for Microsecond-scale Tail Latency. NSDI.",
+    "https://www.usenix.org/conference/nsdi19/presentation/kaffes",
+    "Uses fine-grained preemption to reduce head-of-line blocking across variable-length requests.",
+    "Scheduling latency is established prior work. ARQ has no comparable microsecond scheduler."
+  ],
+  [
+    "Cho et al. (2020). Overload Control for Microsecond-scale RPCs with Breakwater. OSDI.",
+    "https://www.usenix.org/conference/osdi20/presentation/cho",
+    "Uses queue-delay-driven admission credits, demand speculation and overload handling.",
+    "Increasing a grant to expose unmet demand has conceptual overlap; admission credits differ from CPU-duty relaxation."
+  ],
+  [
+    "Qiu et al. (2020). FIRM: An Intelligent Fine-grained Resource Management Framework for SLO-Oriented Microservices. OSDI.",
+    "https://www.usenix.org/conference/osdi20/presentation/qiu",
+    "Uses telemetry and machine learning to localize contention and adapt resource provisioning.",
+    "ML-assisted SLO control is established. ARQ must justify its particular recovery protocol rather than claim ML control generally."
+  ],
+  [
+    "Zhang et al. (2021). Sinan: Data-Driven, QoS-Aware Cluster Management for Microservices. arXiv:2105.13424.",
+    "https://arxiv.org/abs/2105.13424",
+    "Models microservice dependencies to allocate resources while protecting end-to-end tail latency.",
+    "ARQ does not model a microservice dependency graph or validate comparable end-to-end QoS."
+  ],
+  [
+    "Gan et al. (2021). Sage: Leveraging ML to Diagnose Unpredictable Performance in Cloud Microservices. arXiv:2112.06263.",
+    "https://arxiv.org/abs/2112.06263",
+    "Uses unsupervised models for online root-cause diagnosis and corrective performance actions.",
+    "Root-cause inference and correction are known; ARQ gate outcomes do not identify a unique cause."
+  ]
+]
