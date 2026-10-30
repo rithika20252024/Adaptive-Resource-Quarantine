@@ -277,8 +277,8 @@
   <div class="metrics-bar">
     <div class="stat-card">
       <div class="label">Control Model</div>
-      <div class="val" style="color: var(--green);">Closed-Loop</div>
-      <div class="sub">Continuous Re-scoring Active</div>
+      <div class="val" id="controlMode" style="color: var(--green);">Monitoring</div>
+      <div class="sub" id="policyMode">Waiting for control status</div>
     </div>
     <div class="stat-card">
       <div class="label">Active Processes</div>
@@ -286,9 +286,9 @@
       <div class="sub">Tracked by ARQ Telemetry</div>
     </div>
     <div class="stat-card">
-      <div class="label">Quarantined</div>
+      <div class="label">Restriction states</div>
       <div class="val" id="quarantinedProcs" style="color: var(--accent);">0</div>
-      <div class="sub">Throttled, not killed</div>
+      <div class="sub">Recorded controller states; check action status</div>
     </div>
     <div class="stat-card">
       <div class="label">Enforcement</div>
@@ -303,6 +303,7 @@
       <span style="font-size: 12px; color: var(--text-muted);">Auto-refreshes every 1s</span>
     </div>
 
+    <p style="padding: 0 28px; color: var(--text-muted);" id="modeExplanation">Waiting for monitoring mode.</p>
     <table>
       <thead>
         <tr>
@@ -311,16 +312,17 @@
           <th>CPU Usage</th>
           <th>Memory RSS</th>
           <th>Rule-Based Score</th>
-          <th>ML Score</th>
+          <th title="Raw anomaly score minus calibration threshold; positive means flagged. Not a probability.">ML Margin</th>
           <th>ML Status</th>
-          <th>Quarantine Stage</th>
-          <th>Duty Quota</th>
+          <th>Policy Proposal</th>
+          <th>Applied Control</th>
+          <th>Applied Duty</th>
           <th>Action</th>
         </tr>
       </thead>
       <tbody id="procTableBody">
         <tr>
-          <td colspan="10" style="text-align:center; color: var(--text-muted); padding: 30px;">
+          <td colspan="11" style="text-align:center; color: var(--text-muted); padding: 30px;">
             Initializing telemetry monitor...
           </td>
         </tr>
@@ -339,20 +341,27 @@
         const data = await res.json();
         document.getElementById("executionMode").textContent = data.enforcement_enabled ? "Managed only" : "Dry run";
         document.getElementById("capabilityText").textContent = data.capabilities?.backend || "Telemetry unavailable";
-        renderTable(data.processes || []);
+        document.getElementById("controlMode").textContent = data.enforcement_enabled ? "Managed control" : "Policy preview";
+        document.getElementById("policyMode").textContent = "ML mode: " + (data.ml_mode || "shadow");
+        document.getElementById("modeExplanation").textContent = (data.enforcement_enabled
+          ? "Live requests are limited to managed child workloads. Recorded control states are not confirmation of delivered CPU time. "
+          : "Dry run: policy proposals are displayed, but no restriction is applied. Unrestricted does not mean the workload is normal. ")
+          + ((data.ml_mode || "shadow") === "shadow" ? "ML flags are shadow observations and do not change control. " : "Validated ML can corroborate soft restriction only. ")
+          + "ML margin is a threshold comparison, not confidence or probability; limited training data can flag benign processes.";
+        renderTable(data.processes || [], data.enforcement_enabled);
       } catch (e) {
         console.error("Telemetry fetch error:", e);
       }
     }
 
-    function renderTable(procs) {
+    function renderTable(procs, enforcementEnabled = false) {
       document.getElementById('totalProcs').textContent = procs.length;
       const qCount = procs.filter(p => p.stage && p.stage.includes('QUARANTINE')).length;
       document.getElementById('quarantinedProcs').textContent = qCount;
 
       const tbody = document.getElementById('procTableBody');
       if (procs.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 24px; color: var(--text-muted);">No active monitored workloads. Click buttons above to spawn simulated anomalies.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding: 24px; color: var(--text-muted);">No active monitored workloads. Click buttons above to spawn simulated anomalies.</td></tr>';
         return;
       }
 
@@ -360,7 +369,9 @@
         const score = typeof p.score === 'number' ? p.score : 0.0;
         const scorePct = Math.min(100, Math.max(0, Math.round(score * 100)));
         const mlScore = typeof p.ml_score === 'number' ? p.ml_score : null;
-        const mlScoreText = mlScore === null ? 'Unavailable' : mlScore.toFixed(2);
+        const mlMargin = typeof p.ml_margin === 'number' ? p.ml_margin : null;
+        const mlScoreText = mlMargin === null ? 'Unavailable' : mlMargin.toFixed(3);
+        const mlDetail = mlMargin === null ? '' : `raw ${p.ml_raw_score}; threshold ${p.ml_threshold}; ${p.ml_mode || 'shadow'} mode; not a probability`;
         const mlStatus = mlScore === null
           ? '<span class="badge">Model unavailable</span>'
           : (p.ml_anomaly
@@ -381,16 +392,20 @@
         const cpuStr = p.telemetry_status === 'ok' ? (p.cpu_pct || 0).toFixed(1) + '%' : 'Unavailable';
         const memStr = p.telemetry_status === 'ok' ? (p.mem_mb || 0).toFixed(1) + ' MB' : 'Unavailable';
 
-        const stageBadge = `<span class="badge badge-${p.stage}">${p.stage}</span>`;
+        const proposed = p.telemetry_status === 'ok' ? (p.policy_stage || 'PENDING') : 'NO TELEMETRY';
+        const stageBadge = `<span class="badge badge-${proposed}">${proposed === 'NORMAL' ? 'NO ESCALATION' : proposed}</span>`;
+        const applied = p.telemetry_status !== 'ok' ? 'Unknown' : p.stage === 'NORMAL' ? 'Unrestricted' : p.stage;
+        const statusText = p.control_status || 'not_sampled';
+        const appliedText = applied + (!enforcementEnabled ? ' (dry run)' : '');
 
-        const actionButtons = `
+        const actionButtons = p.managed ? `
           <div class="action-group">
             ${p.stage === 'NORMAL'
               ? `<button class="btn-green" style="padding: 4px 8px; font-size:11px;" onclick="quarantinePid(${p.pid})">Quarantine</button>`
               : `<button class="btn-green" style="padding: 4px 8px; font-size:11px;" onclick="releasePid(${p.pid})">Release</button>`}
             <button class="btn-stop" style="padding: 4px 8px; font-size:11px;" onclick="stopPid(${p.pid})">Stop</button>
           </div>
-        `;
+        ` : '<span class="badge">Monitor only</span>';
 
         return `<tr>
           <td><strong>${p.pid}</strong></td>
@@ -401,9 +416,10 @@
             <div class="score-meter"><div class="score-fill" style="width: ${scorePct}%; background: ${fillColor};"></div></div>
             <strong>${score.toFixed(2)}</strong>
           </td>
-          <td>${mlScoreText}</td>
+          <td title="${mlDetail}">${mlScoreText}</td>
           <td>${mlStatus}</td>
-          <td>${stageBadge}</td>
+          <td title="${p.policy_reason || ''}">${stageBadge}</td>
+          <td>${appliedText}<br><small>${statusText}</small></td>
           <td>${dutyStr}</td>
           <td>${actionButtons}</td>
         </tr>`;

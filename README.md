@@ -410,7 +410,7 @@ The dataset confounds labels with host/date. Its high test scores do not establi
 
 [Updated 37-page IDF-B](output/pdf/ARQ_IDF_B_Updated_Kaggle_25_Papers.pdf) retains the OptiGuard-style continuous 25-paper prior-art table and horizontal TRL table. It adds dataset cleaning, chronological partitions, three-seed metrics, the host/date confounding limitation and a seventh screenshot space for Kaggle training output. This standalone IDF-B supersedes earlier standalone versions for current training results; the combined 40-page review remains a historical record.
 
-[Training package](releases/ARQ_Kaggle_Training_With_Updated_Report.zip) includes the CC0 source dataset archive, both trained offline models, source, raw logs, split manifest, predictions, updated report and SHA-256 manifest. Model binaries and raw data are packaged in this ZIP; they are not automatically loaded by the dashboard. The retained training/report snapshot passed **61 tests**; the subsequent evaluation-input fixes bring the current suite to **66 passing tests**.
+[Training package](releases/ARQ_Kaggle_Training_With_Updated_Report.zip) includes the CC0 source dataset archive, both trained offline models, source, raw logs, split manifest, predictions, updated report and SHA-256 manifest. Model binaries and raw data are packaged in this ZIP; they are not automatically loaded by the dashboard. The retained training/report snapshot passed **61 tests**; the subsequent evaluation-input fixes bring the current suite to **69 passing tests**.
 
 Rebuild the IDF-B with `python scripts/build_standalone_idf.py` after installing `reportlab`. Arial fonts are required; on non-macOS hosts set `REPORT_FONT_DIR` to a directory containing Arial.ttf, Arial Bold.ttf and Arial Italic.ttf. The builder reads retained JSON results and uses the bundled logo in `scripts/assets/`.
 
@@ -427,3 +427,11 @@ python -m arq.cli web --ml-mode shadow --ml-model output/validation/support-cand
 ```
 
 `Model unavailable` means a compatible artifact was not loaded. The Kaggle host-level models cannot substitute for the seven-feature process model. `Dry run` means no live enforcement is being demonstrated. A high rule score with a Normal stage in a dry-run screenshot is not evidence of real quarantine. The isolated rule-feature script can legitimately print below-threshold scores for memory-only and thread-only scenarios; that describes the current weighted scorer, not a failed script.
+
+## Detection, policy preview and applied control
+
+The dashboard distinguishes **Policy proposal** from **Applied control**. A CPU rule score of 0.79 proposes SOFT_QUARANTINE. In dry-run mode the applied state remains Unrestricted, applied duty stays at 100%, and the control status reads dry_run. Unrestricted does not mean the workload is healthy. The monitor's own daemon is monitor-only; managed control buttons are shown only for registered child workloads.
+
+In shadow mode ML flags do not influence the policy proposal. A flagged daemon can indicate poor model generalization; do not interpret the flag as verified maliciousness. The old bounded sigmoid ML score was a heuristic, not confidence. The dashboard now shows **ML margin = raw anomaly score - calibration threshold**; a positive margin means flagged and is not a probability. Hover the value to inspect the raw score, threshold and mode.
+
+The restriction-state count describes recorded controller state, not independently measured CPU delivery. Live requests remain opt-in and restricted to managed children. This presentation correction does not retune detectors, certify their quality or activate enforcement. The full suite now passes 69 tests. Frontend smoke checks run with `node tests/dashboard_render_smoke.js`.

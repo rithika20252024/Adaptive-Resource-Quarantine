@@ -145,6 +145,8 @@ class ARQDashboardState:
                     # RestorationEngine or QuarantineController.
                     ml_score = None
                     ml_anomaly = None
+                    raw_anomaly = None
+                    threshold = None
                     if self.ml_artifact is not None:
                         try:
                             features = extract_features(m)
@@ -167,12 +169,16 @@ class ARQDashboardState:
                             ml_anomaly = raw_anomaly > threshold
                         except Exception as exc:
                             self.ml_load_error = str(exc)
+                            ml_score = ml_anomaly = raw_anomaly = threshold = None
 
                     identity = str(pid) + ':' + self.monitor._last_identity.get(pid, 'unknown')
                     decision_score, ml_reason = self.ml_policy.decide(identity, score, ml_anomaly)
-                    stage, action = self.restoration.process_cycle(prof, decision_score)
-                    latest_action = next((x for x in reversed(self.controller.audit) if x.get('pid') == pid), {})
-                    action = latest_action.get('status', 'monitoring') + '; duty control only'
+                    previous_audit = self.controller.audit[-1] if self.controller.audit else None
+                    stage, policy_reason = self.restoration.process_cycle(prof, decision_score)
+                    latest_action = self.controller.audit[-1] if self.controller.audit else None
+                    changed = latest_action is not previous_audit and latest_action and latest_action.get('pid') == pid
+                    control_status = latest_action['status'] if changed else ('dry_run' if not self.controller.enforce else 'no_new_request')
+                    action = control_status + '; ' + policy_reason
                     snapshot.append({
                         "pid": pid,
                         "telemetry_status": "ok",
@@ -182,10 +188,17 @@ class ARQDashboardState:
                         "io_kb_s": m.io_read_kb_s + m.io_write_kb_s,
                         "score": score,
                         "ml_score": ml_score,
+                        "ml_raw_score": raw_anomaly,
+                        "ml_threshold": threshold,
+                        "ml_margin": raw_anomaly - threshold if raw_anomaly is not None and threshold is not None else None,
                         "ml_anomaly": ml_anomaly,
                         "ml_mode": self.ml_policy.mode,
                         "decision_score": decision_score,
                         "ml_reason": ml_reason,
+                        "policy_stage": stage.name,
+                        "policy_reason": policy_reason,
+                        "control_status": control_status,
+                        "managed": pid in self.controller.managed,
                         "stage": prof.stage.name,
                         "duty_cycle": prof.enforced_duty_cycle,
                         "action": action,
@@ -254,6 +267,13 @@ class DashboardRequestHandler(SimpleHTTPRequestHandler):
                             "mem_mb": m.memory_rss_mb if m else 0.0,
                             "score": prof.current_score,
                             "ml_score": latest.get("ml_score"),
+                            "ml_raw_score": latest.get("ml_raw_score"),
+                            "ml_threshold": latest.get("ml_threshold"),
+                            "ml_margin": latest.get("ml_margin"),
+                            "policy_stage": latest.get("policy_stage"),
+                            "policy_reason": latest.get("policy_reason"),
+                            "control_status": latest.get("control_status", "not_sampled"),
+                            "managed": pid in self.state.controller.managed,
                             "ml_anomaly": latest.get("ml_anomaly"),
                             "ml_mode": latest.get("ml_mode", "shadow"),
                             "stage": prof.stage.name,
@@ -265,6 +285,9 @@ class DashboardRequestHandler(SimpleHTTPRequestHandler):
                         "history": self.state.history[-20:],
                         "capabilities": self.state.monitor.capabilities(),
                         "enforcement_enabled": self.state.controller.enforce,
+                        "ml_mode": self.state.ml_policy.mode,
+                        "ml_model_loaded": self.state.ml_artifact is not None,
+                        "ml_load_error": self.state.ml_load_error,
                         "actuator_errors": {pid:t.last_error for pid,t in self.state.controller._throttlers.items() if getattr(t,"last_error",None)},
                         "actuation_audit": list(self.state.controller.audit)[-20:],
                     }
